@@ -1,0 +1,112 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h2>Inscription</h2>
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nom">Nom *</label>
+          <input type="text" id="nom" formControlName="nom" class="form-control" />
+          <span class="error-message" *ngIf="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched">
+            Le nom est obligatoire
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="prenom">Prénom *</label>
+          <input type="text" id="prenom" formControlName="prenom" class="form-control" />
+          <span class="error-message" *ngIf="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched">
+            Le prénom est obligatoire
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dateNaissance">Date de naissance *</label>
+          <input type="date" id="dateNaissance" formControlName="dateNaissance" class="form-control" />
+          <span class="error-message" *ngIf="registerForm.get('dateNaissance')?.invalid && registerForm.get('dateNaissance')?.touched">
+            La date de naissance est obligatoire
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="sexe">Sexe *</label>
+          <select id="sexe" formControlName="sexe" class="form-control">
+            <option value="">Sélectionner</option>
+            <option value="M">M</option>
+            <option value="F">F</option>
+          </select>
+          <span class="error-message" *ngIf="registerForm.get('sexe')?.invalid && registerForm.get('sexe')?.touched">
+            Le sexe est obligatoire (M ou F)
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="adresse">Adresse *</label>
+        <input type="text" id="adresse" formControlName="adresse" class="form-control" />
+        <span class="error-message" *ngIf="registerForm.get('adresse')?.invalid && registerForm.get('adresse')?.touched">
+          L'adresse est obligatoire
+        </span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="telephone">Téléphone *</label>
+          <input type="text" id="telephone" formControlName="telephone" class="form-control" />
+          <span class="error-message" *ngIf="registerForm.get('telephone')?.invalid && registerForm.get('telephone')?.touched">
+            Le téléphone doit contenir 8 à 15 chiffres
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="courriel">Courriel *</label>
+          <input type="email" id="courriel" formControlName="courriel" class="form-control" />
+          <span class="error-message" *ngIf="registerForm.get('courriel')?.invalid && registerForm.get('courriel')?.touched">
+            Le courriel doit être valide
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="nationalite">Nationalité *</label>
+        <input type="text" id="nationalite" formControlName="nationalite" class="form-control" />
+        <span class="error-message" *ngIf="registerForm.get('nationalite')?.invalid && registerForm.get('nationalite')?.touched">
+          La nationalité est obligatoire
+        </span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="username">Nom d'utilisateur *</label>
+          <input type="text" id="username" formControlName="username" class="form-control" />
+          <span class="error-message" *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
+            Le nom d'utilisateur doit contenir au moins 3 caractères
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe *</label>
+          <input type="password" id="password" formControlName="password" class="form-control" />
+          <span class="error-message" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+            Le mot de passe doit contenir au moins 6 caractères
+          </span>
+        </div>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="registerForm.invalid" (click)="$event.stopPropagation()">
+        S'inscrire
+      </button>
+      
+      <div *ngIf="registerForm.invalid && registerForm.touched" class="form-error-hint">
+        Veuillez remplir tous les champs obligatoires correctement
+      </div>
+    </form>
+
+    <p class="auth-link">
+      Déjà un compte ? <a routerLink="/login">Se connecter</a>
+    </p>
+  </div>
+</div>

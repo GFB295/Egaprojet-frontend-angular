@@ -1,0 +1,72 @@
+<div class="comptes-container">
+  <div class="header">
+    <h1>Gestion des Comptes</h1>
+    <button class="btn btn-primary" (click)="openAddForm()">+ Nouveau Compte</button>
+  </div>
+
+  <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <div class="modal" *ngIf="showForm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Nouveau Compte</h2>
+        <button class="close-btn" (click)="closeForm()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Client *</label>
+        <select [(ngModel)]="selectedClientId" class="form-control">
+          <option [value]="null">Sélectionner un client</option>
+          <option *ngFor="let client of clients" [value]="client.id">
+            {{ client.nom }} {{ client.prenom }}
+          </option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Type de compte *</label>
+        <select [(ngModel)]="selectedType" class="form-control">
+          <option value="COURANT">Compte Courant</option>
+          <option value="EPARGNE">Compte Épargne</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeForm()">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="createCompte()" [disabled]="!selectedClientId">
+          Créer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Numéro de compte</th>
+          <th>Type</th>
+          <th>Date de création</th>
+          <th>Solde</th>
+          <th>Client</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let compte of comptes">
+          <td>{{ compte.id }}</td>
+          <td>{{ compte.numeroCompte }}</td>
+          <td>
+            <span [class]="compte.typeCompte === 'COURANT' ? 'badge badge-courant' : 'badge badge-epargne'">
+              {{ compte.typeCompte }}
+            </span>
+          </td>
+          <td>{{ compte.dateCreation | date:'dd/MM/yyyy' }}</td>
+          <td>{{ formatCurrency(compte.solde) }}</td>
+          <td>{{ compte.clientNom }} {{ compte.clientPrenom }}</td>
+          <td>
+            <button class="btn btn-sm btn-delete" (click)="deleteCompte(compte.id!)">Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,36 @@
+<div class="dashboard">
+  <h1>Tableau de bord</h1>
+  
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>Clients</h3>
+      <p class="stat-number">{{ clientsCount }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Comptes</h3>
+      <p class="stat-number">{{ comptesCount }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Transactions</h3>
+      <p class="stat-number">{{ transactionsCount }}</p>
+    </div>
+  </div>
+
+  <div class="quick-actions">
+    <h2>Actions rapides</h2>
+    <div class="actions-grid">
+      <a routerLink="/clients" class="action-card">
+        <h3>Gérer les clients</h3>
+        <p>Créer, modifier ou supprimer des clients</p>
+      </a>
+      <a routerLink="/comptes" class="action-card">
+        <h3>Gérer les comptes</h3>
+        <p>Créer et gérer les comptes bancaires</p>
+      </a>
+      <a routerLink="/transactions" class="action-card">
+        <h3>Transactions</h3>
+        <p>Effectuer des dépôts, retraits et virements</p>
+      </a>
+    </div>
+  </div>
+</div>
