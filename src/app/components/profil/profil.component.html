@@ -1,0 +1,99 @@
+<div class="profil-container">
+  <div class="profil-header">
+    <h1>Mon Profil</h1>
+    <p class="welcome-text">Bienvenue, {{ client?.prenom }} {{ client?.nom }}</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Chargement de vos informations...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="error-state">
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && client" class="profil-content">
+    <!-- Informations Personnelles -->
+    <div class="info-card">
+      <h2>Informations Personnelles</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Nom complet</label>
+          <p>{{ client.prenom }} {{ client.nom }}</p>
+        </div>
+        <div class="info-item">
+          <label>Email</label>
+          <p>{{ client.courriel }}</p>
+        </div>
+        <div class="info-item">
+          <label>Téléphone</label>
+          <p>{{ client.telephone }}</p>
+        </div>
+        <div class="info-item">
+          <label>Date de naissance</label>
+          <p>{{ formatDate(client.dateNaissance) }}</p>
+        </div>
+        <div class="info-item">
+          <label>Sexe</label>
+          <p>{{ client.sexe === 'M' ? 'Masculin' : 'Féminin' }}</p>
+        </div>
+        <div class="info-item">
+          <label>Nationalité</label>
+          <p>{{ client.nationalite }}</p>
+        </div>
+        <div class="info-item full-width">
+          <label>Adresse</label>
+          <p>{{ client.adresse }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comptes Bancaires -->
+    <div class="info-card">
+      <h2>Mes Comptes</h2>
+      <div *ngIf="comptes.length === 0" class="empty-state">
+        <p>Aucun compte disponible</p>
+        <a routerLink="/comptes" class="btn-link">Créer un compte</a>
+      </div>
+      <div *ngIf="comptes.length > 0" class="comptes-grid">
+        <div *ngFor="let compte of comptes" class="compte-card">
+          <div class="compte-header">
+            <h3>{{ compte.typeCompte === 'COURANT' ? 'Compte Courant' : 'Compte Épargne' }}</h3>
+            <span class="compte-type-badge" [class.courant]="compte.typeCompte === 'COURANT'" 
+                  [class.epargne]="compte.typeCompte === 'EPARGNE'">
+              {{ compte.typeCompte }}
+            </span>
+          </div>
+          <div class="compte-details">
+            <p class="compte-numero">N° {{ compte.numeroCompte }}</p>
+            <p class="compte-solde">Solde: <strong>{{ formatCurrency(compte.solde) }}</strong></p>
+            <p class="compte-date">Ouvert le: {{ formatDate(compte.dateCreation) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Rapides -->
+    <div class="info-card">
+      <h2>Actions Rapides</h2>
+      <div class="actions-grid">
+        <a routerLink="/transactions" class="action-card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-width="2"/>
+          </svg>
+          <h3>Transactions</h3>
+          <p>Effectuer des opérations bancaires</p>
+        </a>
+        <a routerLink="/comptes" class="action-card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="2" y="5" width="20" height="14" rx="2" stroke-width="2"/>
+            <path d="M2 10h20" stroke-width="2"/>
+          </svg>
+          <h3>Mes Comptes</h3>
+          <p>Gérer vos comptes</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

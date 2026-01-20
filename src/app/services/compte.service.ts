@@ -3,12 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Compte {
-  id?: number;
+  id?: string;
   numeroCompte: string;
   typeCompte: 'COURANT' | 'EPARGNE';
   dateCreation?: string;
   solde?: number;
-  clientId?: number;
+  clientId?: string;
   clientNom?: string;
   clientPrenom?: string;
 }
@@ -25,7 +25,7 @@ export class CompteService {
     return this.http.get<Compte[]>(this.apiUrl);
   }
 
-  getById(id: number): Observable<Compte> {
+  getById(id: string): Observable<Compte> {
     return this.http.get<Compte>(`${this.apiUrl}/${id}`);
   }
 
@@ -33,17 +33,17 @@ export class CompteService {
     return this.http.get<Compte>(`${this.apiUrl}/numero/${numeroCompte}`);
   }
 
-  getByClientId(clientId: number): Observable<Compte[]> {
+  getByClientId(clientId: string): Observable<Compte[]> {
     return this.http.get<Compte[]>(`${this.apiUrl}/client/${clientId}`);
   }
 
-  create(clientId: number, typeCompte: 'COURANT' | 'EPARGNE'): Observable<Compte> {
+  create(clientId: string, typeCompte: 'COURANT' | 'EPARGNE'): Observable<Compte> {
     return this.http.post<Compte>(`${this.apiUrl}/client/${clientId}`, null, {
       params: { typeCompte }
     });
   }
 
-  delete(id: number): Observable<void> {
+  delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

@@ -14,6 +14,8 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   loginForm: FormGroup;
   errorMessage: string = '';
+  showPassword: boolean = false;
+  isLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -26,22 +28,11 @@ export class LoginComponent {
     });
   }
 
-  onSubmit(): void {
-    console.log('Login onSubmit appelé !', {
-      valid: this.loginForm.valid,
-      value: this.loginForm.value,
-      errors: this.loginForm.errors,
-      controls: Object.keys(this.loginForm.controls).reduce((acc, key) => {
-        const control = this.loginForm.get(key);
-        acc[key] = {
-          valid: control?.valid,
-          errors: control?.errors,
-          value: control?.value
-        };
-        return acc;
-      }, {} as any)
-    });
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
 
+  onSubmit(): void {
     // Marquer tous les champs comme touchés si le formulaire est invalide
     if (!this.loginForm.valid) {
       Object.keys(this.loginForm.controls).forEach(key => {
@@ -51,29 +42,20 @@ export class LoginComponent {
     }
 
     this.errorMessage = '';
-    console.log('Appel de authService.login...');
+    this.isLoading = true;
     
     this.authService.login(this.loginForm.value).subscribe({
       next: (response) => {
-        console.log('✅ Login réussi ! Réponse:', response);
-        console.log('Redirection vers /dashboard...');
-        this.router.navigate(['/dashboard']).then(
-          (success) => {
-            console.log('✅ Navigation réussie:', success);
-          },
-          (error) => {
-            console.error('❌ Erreur de navigation:', error);
-            this.errorMessage = 'Connexion réussie mais erreur de redirection';
-          }
-        );
+        this.isLoading = false;
+        // Rediriger selon le rôle
+        if (response.role === 'ROLE_ADMIN') {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.router.navigate(['/profil']);
+        }
       },
       error: (err) => {
-        console.error('❌ Erreur login:', err);
-        console.error('Status:', err.status);
-        console.error('Status Text:', err.statusText);
-        console.error('Message:', err.message);
-        console.error('Error body:', err.error);
-        
+        this.isLoading = false;
         if (err.status === 0) {
           this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré.';
         } else if (err.error?.message) {

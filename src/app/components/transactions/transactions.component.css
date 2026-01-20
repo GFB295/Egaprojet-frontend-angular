@@ -229,3 +229,164 @@
   border-radius: 4px;
   margin-bottom: 1rem;
 }
+
+/* Success Animation */
+.success-animation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.success-animation-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.success-animation {
+  position: relative;
+  z-index: 2001;
+  transform: scale(0) translateY(-50px);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.5s ease;
+}
+
+.success-animation.show {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.success-content {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  min-width: 350px;
+  max-width: 500px;
+}
+
+.success-content.depot {
+  border-top: 5px solid #10b981;
+}
+
+.success-content.retrait {
+  border-top: 5px solid #ef4444;
+}
+
+.success-content.virement {
+  border-top: 5px solid #3b82f6;
+}
+
+.success-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: rotateIcon 0.8s ease-out;
+}
+
+.success-content.depot .icon-wrapper {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.success-content.retrait .icon-wrapper {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.success-content.virement .icon-wrapper {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.icon-wrapper svg {
+  width: 40px;
+  height: 40px;
+}
+
+.checkmark {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 32px;
+  height: 32px;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: 3px solid white;
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.4s ease-out 0.5s, opacity 0.4s ease-out 0.5s;
+}
+
+.checkmark.show {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.checkmark svg {
+  width: 18px;
+  height: 18px;
+}
+
+.success-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  line-height: 1.6;
+}
+
+@keyframes rotateIcon {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

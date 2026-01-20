@@ -25,9 +25,10 @@ export interface RegisterRequest {
 export interface AuthResponse {
   token: string;
   type: string;
-  userId: number;
+  userId: string;
   username: string;
-  clientId: number;
+  clientId: string | null;
+  role: string;
 }
 
 @Injectable({
@@ -90,6 +91,16 @@ export class AuthService {
 
   getCurrentUser(): AuthResponse | null {
     return this.currentUserSubject.value;
+  }
+
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user?.role === 'ROLE_ADMIN';
+  }
+
+  isClient(): boolean {
+    const user = this.getCurrentUser();
+    return user?.role === 'ROLE_CLIENT' || !user?.role;
   }
 
   private setAuthData(response: AuthResponse): void {

@@ -35,39 +35,31 @@ export class RegisterComponent {
   }
 
   onSubmit(): void {
-    console.log('=== onSubmit appelé ===');
-    console.log('Formulaire valide:', this.registerForm.valid);
-    console.log('Valeurs du formulaire:', this.registerForm.value);
-    
     if (!this.registerForm.valid) {
-      console.log('Formulaire invalide - Erreurs:', this.registerForm.errors);
       // Marquer tous les champs comme touchés pour afficher les erreurs
       Object.keys(this.registerForm.controls).forEach(key => {
         const control = this.registerForm.get(key);
         if (control?.invalid) {
           control.markAsTouched();
-          console.log(`Champ ${key} invalide:`, control.errors);
         }
       });
       return;
     }
 
     this.errorMessage = '';
-    console.log('Appel de authService.register...');
     
-    this.authService.register(this.registerForm.value).subscribe({
+    // Préparer les données pour l'envoi
+    const formData = { ...this.registerForm.value };
+    
+    this.authService.register(formData).subscribe({
       next: (response) => {
         console.log('✅ Inscription réussie ! Réponse:', response);
-        console.log('Redirection vers /dashboard...');
-        this.router.navigate(['/dashboard']).then(
-          (success) => {
-            console.log('✅ Navigation réussie:', success);
-          },
-          (error) => {
-            console.error('❌ Erreur de navigation:', error);
-            this.errorMessage = 'Inscription réussie mais erreur de redirection';
-          }
-        );
+        // Rediriger selon le rôle (les nouveaux clients vont vers profil)
+        if (response.role === 'ROLE_ADMIN') {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.router.navigate(['/profil']);
+        }
       },
       error: (err) => {
         console.error('❌ Erreur inscription:', err);
@@ -79,7 +71,12 @@ export class RegisterComponent {
         if (err.status === 0) {
           this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré.';
         } else if (err.error?.message) {
+          // Erreur avec un message simple
           this.errorMessage = err.error.message;
+        } else if (err.error && typeof err.error === 'object') {
+          // Erreurs de validation (Map avec plusieurs champs)
+          const errorMessages = Object.values(err.error).join(', ');
+          this.errorMessage = errorMessages || 'Erreur de validation';
         } else {
           this.errorMessage = err.message || 'Erreur lors de l\'inscription';
         }

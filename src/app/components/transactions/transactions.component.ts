@@ -27,6 +27,9 @@ export class TransactionsComponent implements OnInit {
   
   errorMessage: string = '';
   releveTransactions: Transaction[] = [];
+  successMessage: string = '';
+  showSuccessAnimation: boolean = false;
+  transactionType: string = '';
 
   constructor(
     private transactionService: TransactionService,
@@ -109,17 +112,28 @@ export class TransactionsComponent implements OnInit {
     this.showVirementForm = false;
     this.showReleveForm = false;
     this.errorMessage = '';
+    this.successMessage = '';
+    this.showSuccessAnimation = false;
   }
 
   submitDepot(): void {
     if (this.depotForm.valid) {
+      this.errorMessage = '';
       this.transactionService.depot(this.depotForm.value).subscribe({
         next: () => {
+          this.showSuccessAnimation = true;
+          this.transactionType = 'depot';
+          this.successMessage = `Dépôt de ${this.formatCurrency(this.depotForm.value.montant)} effectué avec succès !`;
           this.loadComptes();
-          this.closeForms();
+          setTimeout(() => {
+            this.closeForms();
+            this.showSuccessAnimation = false;
+            this.successMessage = '';
+          }, 2500);
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Erreur lors du dépôt';
+          this.showSuccessAnimation = false;
         }
       });
     }
@@ -127,13 +141,22 @@ export class TransactionsComponent implements OnInit {
 
   submitRetrait(): void {
     if (this.retraitForm.valid) {
+      this.errorMessage = '';
       this.transactionService.retrait(this.retraitForm.value).subscribe({
         next: () => {
+          this.showSuccessAnimation = true;
+          this.transactionType = 'retrait';
+          this.successMessage = `Retrait de ${this.formatCurrency(this.retraitForm.value.montant)} effectué avec succès !`;
           this.loadComptes();
-          this.closeForms();
+          setTimeout(() => {
+            this.closeForms();
+            this.showSuccessAnimation = false;
+            this.successMessage = '';
+          }, 2500);
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Erreur lors du retrait';
+          this.showSuccessAnimation = false;
         }
       });
     }
@@ -145,13 +168,22 @@ export class TransactionsComponent implements OnInit {
         this.errorMessage = 'Le compte source et le compte destinataire doivent être différents';
         return;
       }
+      this.errorMessage = '';
       this.transactionService.virement(this.virementForm.value).subscribe({
         next: () => {
+          this.showSuccessAnimation = true;
+          this.transactionType = 'virement';
+          this.successMessage = `Virement de ${this.formatCurrency(this.virementForm.value.montant)} effectué avec succès !`;
           this.loadComptes();
-          this.closeForms();
+          setTimeout(() => {
+            this.closeForms();
+            this.showSuccessAnimation = false;
+            this.successMessage = '';
+          }, 2500);
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Erreur lors du virement';
+          this.showSuccessAnimation = false;
         }
       });
     }

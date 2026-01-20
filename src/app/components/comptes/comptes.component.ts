@@ -15,7 +15,7 @@ export class ComptesComponent implements OnInit {
   comptes: Compte[] = [];
   clients: Client[] = [];
   showForm: boolean = false;
-  selectedClientId: number | null = null;
+  selectedClientId: string | null = null;
   selectedType: 'COURANT' | 'EPARGNE' = 'COURANT';
   errorMessage: string = '';
 
@@ -75,7 +75,7 @@ export class ComptesComponent implements OnInit {
     }
   }
 
-  deleteCompte(id: number): void {
+  deleteCompte(id: string): void {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce compte ?')) {
       this.compteService.delete(id).subscribe({
         next: () => {

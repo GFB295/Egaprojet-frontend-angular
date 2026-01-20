@@ -98,7 +98,7 @@ export class ClientsComponent implements OnInit {
     }
   }
 
-  deleteClient(id: number): void {
+  deleteClient(id: string): void {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
       this.clientService.delete(id).subscribe({
         next: () => {
