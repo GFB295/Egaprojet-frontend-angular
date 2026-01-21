@@ -1,98 +1,168 @@
 <div class="profil-container">
-  <div class="profil-header">
-    <h1>Mon Profil</h1>
-    <p class="welcome-text">Bienvenue, {{ client?.prenom }} {{ client?.nom }}</p>
-  </div>
-
-  <div *ngIf="isLoading" class="loading-state">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
     <div class="spinner"></div>
-    <p>Chargement de vos informations...</p>
+    <p>Chargement de votre profil...</p>
   </div>
 
-  <div *ngIf="!isLoading && errorMessage" class="error-state">
+  <!-- Error State -->
+  <div *ngIf="!isLoading && errorMessage" class="error-container">
+    <div class="error-icon">⚠️</div>
+    <h3>Erreur de chargement</h3>
     <p>{{ errorMessage }}</p>
+    <button class="btn-retry" (click)="loadClientData()">Réessayer</button>
   </div>
 
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="success-banner">
+    <span class="success-icon">✅</span>
+    {{ successMessage }}
+  </div>
+
+  <!-- Main Content -->
   <div *ngIf="!isLoading && !errorMessage && client" class="profil-content">
-    <!-- Informations Personnelles -->
-    <div class="info-card">
-      <h2>Informations Personnelles</h2>
+    
+    <!-- Header avec photo de profil -->
+    <div class="profil-header">
+      <div class="avatar">
+        <span>{{ client.prenom?.charAt(0) }}{{ client.nom?.charAt(0) }}</span>
+      </div>
+      <div class="user-info">
+        <h1>{{ client.prenom }} {{ client.nom }}</h1>
+        <p class="user-email">{{ client.courriel }}</p>
+        <span class="user-role">{{ getCurrentUserRole() }}</span>
+      </div>
+    </div>
+
+    <!-- Informations personnelles -->
+    <div class="info-section">
+      <h2>📋 Informations personnelles</h2>
       <div class="info-grid">
         <div class="info-item">
           <label>Nom complet</label>
-          <p>{{ client.prenom }} {{ client.nom }}</p>
-        </div>
-        <div class="info-item">
-          <label>Email</label>
-          <p>{{ client.courriel }}</p>
-        </div>
-        <div class="info-item">
-          <label>Téléphone</label>
-          <p>{{ client.telephone }}</p>
+          <span>{{ client.nom }} {{ client.prenom }}</span>
         </div>
         <div class="info-item">
           <label>Date de naissance</label>
-          <p>{{ formatDate(client.dateNaissance) }}</p>
+          <span>{{ formatDate(client.dateNaissance) }}</span>
         </div>
         <div class="info-item">
           <label>Sexe</label>
-          <p>{{ client.sexe === 'M' ? 'Masculin' : 'Féminin' }}</p>
+          <span>{{ getSexeLabel(client.sexe) }}</span>
         </div>
         <div class="info-item">
           <label>Nationalité</label>
-          <p>{{ client.nationalite }}</p>
+          <span>{{ client.nationalite }}</span>
         </div>
         <div class="info-item full-width">
           <label>Adresse</label>
-          <p>{{ client.adresse }}</p>
+          <span>{{ client.adresse }}</span>
+        </div>
+        <div class="info-item">
+          <label>Téléphone</label>
+          <span>{{ client.telephone }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Comptes Bancaires -->
-    <div class="info-card">
-      <h2>Mes Comptes</h2>
+    <!-- Mes comptes -->
+    <div class="info-section">
+      <h2>💳 Mes comptes</h2>
       <div *ngIf="comptes.length === 0" class="empty-state">
-        <p>Aucun compte disponible</p>
-        <a routerLink="/comptes" class="btn-link">Créer un compte</a>
+        <p>Aucun compte trouvé</p>
       </div>
-      <div *ngIf="comptes.length > 0" class="comptes-grid">
+      <div *ngIf="comptes.length > 0" class="comptes-list">
         <div *ngFor="let compte of comptes" class="compte-card">
-          <div class="compte-header">
-            <h3>{{ compte.typeCompte === 'COURANT' ? 'Compte Courant' : 'Compte Épargne' }}</h3>
-            <span class="compte-type-badge" [class.courant]="compte.typeCompte === 'COURANT'" 
-                  [class.epargne]="compte.typeCompte === 'EPARGNE'">
-              {{ compte.typeCompte }}
+          <div class="compte-type">
+            <span class="type-badge" [class]="compte.typeCompte.toLowerCase()">
+              {{ compte.typeCompte === 'COURANT' ? '🏦 Courant' : '💰 Épargne' }}
             </span>
           </div>
           <div class="compte-details">
-            <p class="compte-numero">N° {{ compte.numeroCompte }}</p>
-            <p class="compte-solde">Solde: <strong>{{ formatCurrency(compte.solde) }}</strong></p>
-            <p class="compte-date">Ouvert le: {{ formatDate(compte.dateCreation) }}</p>
+            <div class="compte-numero">{{ compte.numeroCompte }}</div>
+            <div class="compte-solde">{{ formatCurrency(compte.solde) }}</div>
+            <div class="compte-date">Ouvert le {{ formatDate(compte.dateCreation) }}</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Actions Rapides -->
-    <div class="info-card">
-      <h2>Actions Rapides</h2>
+    <!-- Transactions récentes -->
+    <div class="info-section">
+      <div class="section-header">
+        <h2>📊 Transactions récentes</h2>
+        <button class="btn-pdf" (click)="openReleveForm()">
+          📄 Télécharger PDF
+        </button>
+      </div>
+      
+      <div *ngIf="recentTransactions.length === 0" class="empty-state">
+        <p>Aucune transaction récente</p>
+      </div>
+      
+      <div *ngIf="recentTransactions.length > 0" class="transactions-list">
+        <div *ngFor="let transaction of recentTransactions" 
+             class="transaction-row" 
+             [class]="'transaction-' + transaction.typeTransaction.toLowerCase()">
+          <div class="transaction-icon">
+            <span *ngIf="transaction.typeTransaction === 'DEPOT'">⬇️</span>
+            <span *ngIf="transaction.typeTransaction === 'RETRAIT'">⬆️</span>
+            <span *ngIf="transaction.typeTransaction === 'VIREMENT'">↔️</span>
+          </div>
+          <div class="transaction-info">
+            <div class="transaction-type">{{ getTransactionTypeLabel(transaction.typeTransaction) }}</div>
+            <div class="transaction-date">{{ formatDateTime(transaction.dateTransaction) }}</div>
+            <div class="transaction-compte">Compte: {{ transaction.compteNumero }}</div>
+          </div>
+          <div class="transaction-amount" [class]="transaction.typeTransaction === 'DEPOT' ? 'positive' : 'negative'">
+            {{ transaction.typeTransaction === 'DEPOT' ? '+' : '-' }}{{ formatCurrency(transaction.montant) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="info-section">
+      <h2>⚙️ Actions</h2>
       <div class="actions-grid">
-        <a routerLink="/transactions" class="action-card">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-width="2"/>
-          </svg>
-          <h3>Transactions</h3>
-          <p>Effectuer des opérations bancaires</p>
-        </a>
-        <a routerLink="/comptes" class="action-card">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <rect x="2" y="5" width="20" height="14" rx="2" stroke-width="2"/>
-            <path d="M2 10h20" stroke-width="2"/>
-          </svg>
-          <h3>Mes Comptes</h3>
-          <p>Gérer vos comptes</p>
-        </a>
+        <button class="action-btn" (click)="changePassword()">
+          🔒 Changer mot de passe
+        </button>
+        <button class="action-btn danger" (click)="logout()">
+          🚪 Déconnexion
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal PDF -->
+  <div *ngIf="showReleveForm" class="modal-overlay" (click)="closeReleveForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📄 Télécharger le relevé PDF</h3>
+        <button class="modal-close" (click)="closeReleveForm()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Compte</label>
+          <select [(ngModel)]="releveForm.numeroCompte" class="form-input">
+            <option *ngFor="let compte of comptes" [value]="compte.numeroCompte">
+              {{ compte.numeroCompte }} - {{ compte.typeCompte }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date de début</label>
+          <input type="date" [(ngModel)]="releveForm.dateDebut" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Date de fin</label>
+          <input type="date" [(ngModel)]="releveForm.dateFin" class="form-input" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeReleveForm()">Annuler</button>
+        <button class="btn-primary" (click)="downloadRelevePDF()">Télécharger</button>
       </div>
     </div>
   </div>

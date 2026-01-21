@@ -44,8 +44,11 @@ export class LoginComponent {
     this.errorMessage = '';
     this.isLoading = true;
     
+    console.log('📤 Tentative de connexion:', this.loginForm.value);
+    
     this.authService.login(this.loginForm.value).subscribe({
       next: (response) => {
+        console.log('✅ Connexion réussie ! Réponse:', response);
         this.isLoading = false;
         // Rediriger selon le rôle
         if (response.role === 'ROLE_ADMIN') {
@@ -55,9 +58,12 @@ export class LoginComponent {
         }
       },
       error: (err) => {
+        console.error('❌ Erreur connexion:', err);
         this.isLoading = false;
         if (err.status === 0) {
-          this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré.';
+          this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré sur le port 8080.';
+        } else if (err.status === 401) {
+          this.errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect.';
         } else if (err.error?.message) {
           this.errorMessage = err.error.message;
         } else {

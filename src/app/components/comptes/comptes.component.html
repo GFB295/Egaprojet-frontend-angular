@@ -5,6 +5,7 @@
   </div>
 
   <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
 
   <div class="modal" *ngIf="showForm">
     <div class="modal-content">
@@ -12,7 +13,7 @@
         <h2>Nouveau Compte</h2>
         <button class="close-btn" (click)="closeForm()">&times;</button>
       </div>
-      <div class="form-group">
+      <div class="form-group" *ngIf="isAdmin">
         <label>Client *</label>
         <select [(ngModel)]="selectedClientId" class="form-control">
           <option [value]="null">Sélectionner un client</option>
@@ -20,6 +21,10 @@
             {{ client.nom }} {{ client.prenom }}
           </option>
         </select>
+      </div>
+      <div class="form-group" *ngIf="!isAdmin">
+        <label>Client</label>
+        <input type="text" class="form-control" value="Votre compte" disabled />
       </div>
       <div class="form-group">
         <label>Type de compte *</label>
@@ -30,7 +35,7 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" (click)="closeForm()">Annuler</button>
-        <button type="button" class="btn btn-primary" (click)="createCompte()" [disabled]="!selectedClientId">
+        <button type="button" class="btn btn-primary" (click)="createCompte()" [disabled]="isAdmin && !selectedClientId">
           Créer
         </button>
       </div>
@@ -46,7 +51,7 @@
           <th>Type</th>
           <th>Date de création</th>
           <th>Solde</th>
-          <th>Client</th>
+          <th *ngIf="isAdmin">Client</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -61,7 +66,7 @@
           </td>
           <td>{{ compte.dateCreation | date:'dd/MM/yyyy' }}</td>
           <td>{{ formatCurrency(compte.solde) }}</td>
-          <td>{{ compte.clientNom }} {{ compte.clientPrenom }}</td>
+          <td *ngIf="isAdmin">{{ compte.clientNom }} {{ compte.clientPrenom }}</td>
           <td>
             <button class="btn btn-sm btn-delete" (click)="deleteCompte(compte.id!)">Supprimer</button>
           </td>

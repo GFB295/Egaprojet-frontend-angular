@@ -5,14 +5,35 @@
     <div class="stat-card">
       <h3>Clients</h3>
       <p class="stat-number">{{ clientsCount }}</p>
+      <p class="stat-label">Nombre total de clients</p>
     </div>
     <div class="stat-card">
       <h3>Comptes</h3>
       <p class="stat-number">{{ comptesCount }}</p>
+      <p class="stat-label">Nombre total de comptes</p>
     </div>
     <div class="stat-card">
       <h3>Transactions</h3>
       <p class="stat-number">{{ transactionsCount }}</p>
+      <p class="stat-label">Nombre total de transactions</p>
+    </div>
+  </div>
+
+  <div *ngIf="recentTransactions.length > 0" class="recent-transactions">
+    <h2>Transactions récentes</h2>
+    <div class="transactions-list">
+      <div *ngFor="let transaction of recentTransactions" class="transaction-item">
+        <div class="transaction-info">
+          <span class="transaction-type">{{ transaction.typeTransaction }}</span>
+          <span class="transaction-date">{{ formatDate(transaction.dateTransaction) }}</span>
+        </div>
+        <div class="transaction-amount">
+          {{ formatCurrency(transaction.montant) }}
+        </div>
+        <div class="transaction-compte">
+          Compte: {{ transaction.compteNumero }}
+        </div>
+      </div>
     </div>
   </div>
 

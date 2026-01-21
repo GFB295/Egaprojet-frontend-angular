@@ -51,6 +51,8 @@ export class RegisterComponent {
     // Préparer les données pour l'envoi
     const formData = { ...this.registerForm.value };
     
+    console.log('📤 Envoi des données d\'inscription:', formData);
+    
     this.authService.register(formData).subscribe({
       next: (response) => {
         console.log('✅ Inscription réussie ! Réponse:', response);
@@ -69,16 +71,20 @@ export class RegisterComponent {
         console.error('Error body:', err.error);
         
         if (err.status === 0) {
-          this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré.';
-        } else if (err.error?.message) {
-          // Erreur avec un message simple
-          this.errorMessage = err.error.message;
-        } else if (err.error && typeof err.error === 'object') {
-          // Erreurs de validation (Map avec plusieurs champs)
-          const errorMessages = Object.values(err.error).join(', ');
-          this.errorMessage = errorMessages || 'Erreur de validation';
+          this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré sur le port 8080.';
+        } else if (err.status === 400 && err.error) {
+          // Erreurs de validation du backend
+          if (typeof err.error === 'string') {
+            this.errorMessage = err.error;
+          } else if (err.error.message) {
+            this.errorMessage = err.error.message;
+          } else {
+            // Erreurs de validation multiples
+            const errorMessages = Object.values(err.error).join(', ');
+            this.errorMessage = errorMessages || 'Erreur de validation';
+          }
         } else {
-          this.errorMessage = err.message || 'Erreur lors de l\'inscription';
+          this.errorMessage = err.error?.message || err.message || 'Erreur lors de l\'inscription';
         }
       }
     });

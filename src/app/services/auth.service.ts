@@ -12,7 +12,7 @@ export interface AuthRequest {
 export interface RegisterRequest {
   nom: string;
   prenom: string;
-  dateNaissance: string;
+  dateNaissance: string; // Sera convertie en LocalDate côté backend
   sexe: string;
   adresse: string;
   telephone: string;
