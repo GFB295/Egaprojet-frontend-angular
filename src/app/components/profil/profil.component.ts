@@ -31,6 +31,10 @@ export class ProfilComponent implements OnInit {
     dateFin: ''
   };
 
+  // Pour l'édition du profil
+  showEditForm: boolean = false;
+  editForm: any = {};
+
   constructor(
     public authService: AuthService,
     private clientService: ClientService,
@@ -41,6 +45,13 @@ export class ProfilComponent implements OnInit {
   ngOnInit(): void {
     console.log('ProfilComponent: Initialisation...');
     this.loadClientData();
+    
+    // Recharger les données toutes les 30 secondes pour maintenir la fraîcheur
+    setInterval(() => {
+      if (!this.isLoading && this.client) {
+        this.loadRecentTransactions();
+      }
+    }, 30000);
   }
 
   loadClientData(): void {
@@ -327,5 +338,53 @@ export class ProfilComponent implements OnInit {
       'VIREMENT': 'transaction-virement'
     };
     return classes[type] || '';
+  }
+
+  editProfile(): void {
+    if (this.client) {
+      this.editForm = { ...this.client };
+      this.showEditForm = true;
+    }
+  }
+
+  closeEditForm(): void {
+    this.showEditForm = false;
+    this.editForm = {};
+  }
+
+  saveProfile(): void {
+    if (!this.client?.id) return;
+    
+    this.clientService.update(this.client.id, this.editForm).subscribe({
+      next: (updatedClient) => {
+        this.client = updatedClient;
+        this.successMessage = 'Profil mis à jour avec succès';
+        this.showEditForm = false;
+        setTimeout(() => this.successMessage = '', 5000);
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Erreur lors de la mise à jour';
+      }
+    });
+  }
+
+  deleteAccount(): void {
+    if (!this.client?.id) return;
+    
+    const confirmation = confirm(
+      'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible et supprimera toutes vos données.'
+    );
+    
+    if (confirmation) {
+      this.clientService.delete(this.client.id).subscribe({
+        next: () => {
+          alert('Votre compte a été supprimé avec succès.');
+          this.authService.logout();
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Erreur lors de la suppression du compte';
+        }
+      });
+    }
   }
 }

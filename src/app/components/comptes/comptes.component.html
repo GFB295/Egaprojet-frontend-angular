@@ -7,6 +7,16 @@
   <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
   <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
 
+  <!-- Indicateur de chargement -->
+  <div class="loading" *ngIf="comptes.length === 0 && !errorMessage">
+    <p>🔄 Chargement des comptes...</p>
+  </div>
+
+  <!-- Message si aucun compte -->
+  <div class="no-data" *ngIf="comptes.length === 0 && !errorMessage">
+    <p>Aucun compte trouvé. Créez votre premier compte en cliquant sur "Nouveau Compte".</p>
+  </div>
+
   <div class="modal" *ngIf="showForm">
     <div class="modal-content">
       <div class="modal-header">
@@ -42,7 +52,7 @@
     </div>
   </div>
 
-  <div class="table-container">
+  <div class="table-container" *ngIf="!isLoading && comptes.length > 0">
     <table class="data-table">
       <thead>
         <tr>

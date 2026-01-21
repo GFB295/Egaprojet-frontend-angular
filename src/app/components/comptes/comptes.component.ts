@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CompteService, Compte } from '../../services/compte.service';
 import { ClientService, Client } from '../../services/client.service';
 import { AuthService } from '../../services/auth.service';
+import { DataCacheService } from '../../services/data-cache.service';
 
 @Component({
   selector: 'app-comptes',
@@ -21,30 +22,63 @@ export class ComptesComponent implements OnInit {
   errorMessage: string = '';
   successMessage: string = '';
   isAdmin: boolean = false;
+  isLoading: boolean = true;
 
   constructor(
     private compteService: CompteService,
     private clientService: ClientService,
-    private authService: AuthService
+    private authService: AuthService,
+    private dataCacheService: DataCacheService
   ) {}
 
   ngOnInit(): void {
+    console.log('🚀 Comptes ngOnInit - DÉBUT avec cache');
     this.isAdmin = this.authService.isAdmin();
+    console.log('👤 Utilisateur admin:', this.isAdmin);
+    
+    // S'abonner aux données du cache
+    this.dataCacheService.dashboardData$.subscribe(data => {
+      if (data) {
+        console.log('🏦 Comptes reçus du cache:', data.comptes.length);
+        this.comptes = data.comptes;
+        this.clients = data.clients; // Pour les admins
+        this.isLoading = false;
+      }
+    });
+
+    // S'abonner à l'état de chargement
+    this.dataCacheService.isLoading$.subscribe(loading => {
+      this.isLoading = loading;
+    });
+    
+    // Charger les données
     this.loadComptes();
-    if (this.isAdmin) {
-      this.loadClients();
-    }
   }
 
   loadComptes(): void {
-    // getAll() retourne maintenant uniquement les comptes du client connecté (ou tous pour admin)
-    this.compteService.getAll().subscribe({
-      next: (comptes) => {
-        this.comptes = comptes;
+    console.log('🏦 loadComptes - Utilisation du cache');
+    
+    // Vérifier si on a déjà des données en cache
+    const cachedComptes = this.dataCacheService.getComptes();
+    const cachedClients = this.dataCacheService.getClients();
+    
+    if (cachedComptes.length > 0) {
+      console.log('✅ Comptes déjà en cache:', cachedComptes.length);
+      this.comptes = cachedComptes;
+      this.clients = cachedClients;
+      this.isLoading = false;
+      return;
+    }
+    
+    // Sinon, charger via le service de cache
+    this.dataCacheService.getDashboardData().subscribe({
+      next: (data) => {
+        console.log('✅ Comptes chargés via cache service');
       },
       error: (err) => {
+        console.error('❌ Erreur comptes:', err);
         this.errorMessage = 'Erreur lors du chargement des comptes';
-        console.error(err);
+        this.isLoading = false;
       }
     });
   }

@@ -5,6 +5,8 @@ import { ClientService, Client } from '../../services/client.service';
 import { CompteService, Compte } from '../../services/compte.service';
 import { TransactionService, Transaction } from '../../services/transaction.service';
 import { AuthService } from '../../services/auth.service';
+import { DataCacheService, DashboardData } from '../../services/data-cache.service';
+import { SessionMonitorService } from '../../services/session-monitor.service';
 import { interval, Subscription } from 'rxjs';
 
 @Component({
@@ -18,6 +20,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   clientsCount: number = 0;
   comptesCount: number = 0;
   transactionsCount: number = 0;
+  totalSolde: number = 0;
   recentTransactions: Transaction[] = [];
   isLoading: boolean = true;
   private refreshSubscription?: Subscription;
@@ -26,14 +29,43 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private clientService: ClientService,
     private compteService: CompteService,
     private transactionService: TransactionService,
-    public authService: AuthService
+    public authService: AuthService,
+    private dataCacheService: DataCacheService,
+    private sessionMonitorService: SessionMonitorService
   ) {}
 
   ngOnInit(): void {
+    console.log('🚀 Dashboard ngOnInit - DÉBUT avec cache');
+    console.log('🚀 Dashboard ngOnInit - Utilisateur connecté:', this.authService.isAuthenticated());
+    
+    // S'abonner aux données du cache
+    this.dataCacheService.dashboardData$.subscribe(data => {
+      if (data) {
+        console.log('📊 Données reçues du cache:', data);
+        this.clientsCount = data.clientsCount;
+        this.comptesCount = data.comptesCount;
+        this.transactionsCount = data.transactionsCount;
+        this.totalSolde = data.totalSolde;
+        this.recentTransactions = data.transactions.slice(0, 5);
+      }
+    });
+
+    // S'abonner à l'état de chargement
+    this.dataCacheService.isLoading$.subscribe(loading => {
+      this.isLoading = loading;
+    });
+    
+    // Charger les données (depuis le cache ou l'API)
     this.loadDashboardData();
-    // Rafraîchir automatiquement toutes les 5 secondes
-    this.refreshSubscription = interval(5000).subscribe(() => {
-      this.loadDashboardData();
+    
+    // Rafraîchir automatiquement toutes les 60 secondes
+    this.refreshSubscription = interval(60000).subscribe(() => {
+      console.log('⏰ Rafraîchissement automatique du dashboard');
+      if (this.authService.isAuthenticated()) {
+        this.dataCacheService.refreshData().subscribe();
+      } else {
+        console.log('⚠️ Utilisateur non authentifié, arrêt du rafraîchissement');
+      }
     });
   }
 
@@ -44,72 +76,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadDashboardData(): void {
-    this.isLoading = true;
-    
-    // Charger le nombre de clients
-    this.clientService.getAll().subscribe({
-      next: (clients) => {
-        this.clientsCount = clients.length;
+    console.log('🔄 loadDashboardData - Utilisation du cache');
+    this.dataCacheService.getDashboardData().subscribe({
+      next: (data) => {
+        console.log('✅ Données dashboard chargées via cache');
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des clients:', err);
+        console.error('❌ Erreur chargement dashboard:', err);
       }
     });
-
-    // Charger le nombre de comptes
-    this.compteService.getAll().subscribe({
-      next: (comptes) => {
-        this.comptesCount = comptes.length;
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des comptes:', err);
-      }
-    });
-
-    // Charger toutes les transactions pour compter
-    this.loadTransactionsCount();
   }
 
-  loadTransactionsCount(): void {
-    // Pour compter les transactions, on doit récupérer toutes les transactions de tous les comptes
-    // On va utiliser une approche différente : compter les transactions via les comptes
-    this.compteService.getAll().subscribe({
-      next: (comptes) => {
-        if (comptes.length === 0) {
-          this.transactionsCount = 0;
-          this.isLoading = false;
-          return;
-        }
-
-        // Charger les transactions pour chaque compte
-        const transactionPromises = comptes.map(compte =>
-          this.transactionService.getByCompte(compte.numeroCompte).toPromise()
-        );
-
-        Promise.all(transactionPromises).then(results => {
-          const allTransactions = results
-            .filter(t => t !== undefined)
-            .flat() as Transaction[];
-          
-          this.transactionsCount = allTransactions.length;
-          
-          // Trier et prendre les 5 dernières transactions
-          allTransactions.sort((a, b) => {
-            const dateA = a.dateTransaction ? new Date(a.dateTransaction).getTime() : 0;
-            const dateB = b.dateTransaction ? new Date(b.dateTransaction).getTime() : 0;
-            return dateB - dateA;
-          });
-          
-          this.recentTransactions = allTransactions.slice(0, 5);
-          this.isLoading = false;
-        }).catch(err => {
-          console.error('Erreur lors du chargement des transactions:', err);
-          this.isLoading = false;
-        });
+  refreshData(): void {
+    console.log('🔄 refreshData - Actualisation forcée');
+    this.dataCacheService.refreshData().subscribe({
+      next: (data) => {
+        console.log('✅ Données actualisées avec succès');
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des comptes:', err);
-        this.isLoading = false;
+        console.error('❌ Erreur actualisation:', err);
+      }
+    });
+  }
+
+  testConnection(): void {
+    console.log('🧪 Test de connexion démarré');
+    console.log('🧪 Utilisateur authentifié:', this.authService.isAuthenticated());
+    console.log('🧪 Token:', this.authService.getToken()?.substring(0, 30) + '...');
+    console.log('🧪 Utilisateur actuel:', this.authService.getCurrentUser());
+    
+    // Test direct de l'API clients via le cache
+    this.dataCacheService.refreshData().subscribe({
+      next: (data) => {
+        console.log('🧪 ✅ Test cache réussi:', data);
+        alert(`Test réussi: ${data.clientsCount} clients, ${data.comptesCount} comptes`);
+      },
+      error: (err) => {
+        console.error('🧪 ❌ Test cache échoué:', err);
+        alert(`Test échoué: ${err.message || err}`);
       }
     });
   }

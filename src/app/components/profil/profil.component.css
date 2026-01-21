@@ -346,6 +346,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  text-decoration: none;
 }
 
 .action-btn:hover {
@@ -359,6 +360,12 @@
 
 .action-btn.danger:hover {
   background: #e53e3e;
+}
+
+/* Textarea pour les formulaires */
+textarea.form-input {
+  resize: vertical;
+  min-height: 80px;
 }
 
 /* Empty State */

@@ -2,9 +2,76 @@
   padding: 2rem 0;
 }
 
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
 .dashboard h1 {
   color: #1e3a8a;
+  margin: 0;
+}
+
+.refresh-btn, .test-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+.test-btn {
+  background: #10b981;
+}
+
+.refresh-btn:hover:not(:disabled), .test-btn:hover {
+  background: #2563eb;
+}
+
+.test-btn:hover {
+  background: #059669;
+}
+
+.refresh-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.auth-warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
   margin-bottom: 2rem;
+}
+
+.auth-warning p {
+  margin: 0 0 1rem 0;
+  color: #92400e;
+}
+
+.login-link {
+  background: #f59e0b;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-link:hover {
+  background: #d97706;
 }
 
 .stats-grid {
@@ -17,12 +84,42 @@
 .stat-card {
   background: white;
   padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.stat-card h3 {
-  margin: 0 0 1rem 0;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.clients {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.comptes {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.transactions {
+  border-left: 4px solid #f59e0b;
+}
+
+.stat-card.solde {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  opacity: 0.8;
+}
+
+.stat-content h3 {
+  margin: 0 0 0.5rem 0;
   color: #6b7280;
   font-size: 0.875rem;
   text-transform: uppercase;
@@ -31,14 +128,14 @@
 
 .stat-number {
   margin: 0;
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   color: #1e3a8a;
 }
 
 .stat-label {
-  margin: 0.5rem 0 0 0;
-  font-size: 0.875rem;
+  margin: 0.25rem 0 0 0;
+  font-size: 0.75rem;
   color: #6b7280;
 }
 

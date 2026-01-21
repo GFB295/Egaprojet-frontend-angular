@@ -5,6 +5,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { TransactionService, Transaction, OperationRequest, VirementRequest, ReleveRequest } from '../../services/transaction.service';
 import { CompteService, Compte } from '../../services/compte.service';
 import { NotificationService } from '../../services/notification.service';
+import { AuthService } from '../../services/auth.service';
+import { DataCacheService } from '../../services/data-cache.service';
 
 @Component({
   selector: 'app-transactions',
@@ -36,7 +38,9 @@ export class TransactionsComponent implements OnInit {
     private transactionService: TransactionService,
     private compteService: CompteService,
     private notificationService: NotificationService,
+    private authService: AuthService,
     private fb: FormBuilder,
+    private dataCacheService: DataCacheService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.depotForm = this.fb.group({
@@ -66,40 +70,69 @@ export class TransactionsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('🚀 Transactions ngOnInit - DÉBUT avec cache');
+    
+    // S'abonner aux données du cache
+    this.dataCacheService.dashboardData$.subscribe(data => {
+      if (data) {
+        console.log('💳 Données transactions reçues du cache');
+        this.comptes = data.comptes;
+        this.transactions = data.transactions;
+      }
+    });
+    
+    // Charger les données
     this.loadComptes();
     this.loadTransactions();
+    
+    // Recharger les données toutes les 60 secondes
+    setInterval(() => {
+      this.loadTransactions();
+    }, 60000);
   }
 
   loadComptes(): void {
-    this.compteService.getAll().subscribe({
-      next: (comptes) => {
-        this.comptes = comptes;
+    console.log('🏦 loadComptes transactions - Utilisation du cache');
+    
+    // Vérifier si on a déjà des données en cache
+    const cachedComptes = this.dataCacheService.getComptes();
+    if (cachedComptes.length > 0) {
+      console.log('✅ Comptes déjà en cache pour transactions:', cachedComptes.length);
+      this.comptes = cachedComptes;
+      return;
+    }
+    
+    // Sinon, charger via le service de cache
+    this.dataCacheService.getDashboardData().subscribe({
+      next: (data) => {
+        console.log('✅ Comptes chargés via cache service pour transactions');
+      },
+      error: (err) => {
+        console.error('❌ Erreur comptes transactions:', err);
       }
     });
   }
 
   loadTransactions(): void {
-    // Charger les transactions de tous les comptes
-    if (this.comptes.length > 0) {
-      const transactionPromises = this.comptes.map(compte =>
-        this.transactionService.getByCompte(compte.numeroCompte).toPromise()
-      );
-
-      Promise.all(transactionPromises).then(results => {
-        this.transactions = results
-          .filter(t => t !== undefined)
-          .flat() as Transaction[];
-        
-        // Trier par date (plus récentes en premier)
-        this.transactions.sort((a, b) => {
-          const dateA = a.dateTransaction ? new Date(a.dateTransaction).getTime() : 0;
-          const dateB = b.dateTransaction ? new Date(b.dateTransaction).getTime() : 0;
-          return dateB - dateA;
-        });
-      }).catch(err => {
-        console.error('Erreur lors du chargement des transactions:', err);
-      });
+    console.log('💳 loadTransactions - Utilisation du cache');
+    
+    // Vérifier si on a déjà des données en cache
+    const cachedTransactions = this.dataCacheService.getTransactions();
+    if (cachedTransactions.length > 0) {
+      console.log('✅ Transactions déjà en cache:', cachedTransactions.length);
+      this.transactions = cachedTransactions;
+      return;
     }
+    
+    // Sinon, charger via le service de cache
+    this.dataCacheService.getDashboardData().subscribe({
+      next: (data) => {
+        console.log('✅ Transactions chargées via cache service');
+      },
+      error: (err) => {
+        console.error('❌ Erreur transactions:', err);
+      }
+    });
   }
 
   openDepotForm(): void {

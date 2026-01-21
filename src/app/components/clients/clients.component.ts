@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ClientService, Client } from '../../services/client.service';
+import { AuthService } from '../../services/auth.service';
+import { DataCacheService } from '../../services/data-cache.service';
 
 @Component({
   selector: 'app-clients',
@@ -16,10 +18,13 @@ export class ClientsComponent implements OnInit {
   clientForm: FormGroup;
   editingClient: Client | null = null;
   errorMessage: string = '';
+  isLoading: boolean = true;
 
   constructor(
     private clientService: ClientService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private dataCacheService: DataCacheService
   ) {
     this.clientForm = this.fb.group({
       nom: ['', Validators.required],
@@ -34,16 +39,49 @@ export class ClientsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('🚀 Clients ngOnInit - DÉBUT avec cache');
+    console.log('🚀 Clients ngOnInit - Utilisateur connecté:', this.authService?.isAuthenticated());
+    
+    // S'abonner aux données du cache
+    this.dataCacheService.dashboardData$.subscribe(data => {
+      if (data) {
+        console.log('👥 Clients reçus du cache:', data.clients.length);
+        this.clients = data.clients;
+        this.isLoading = false;
+      }
+    });
+
+    // S'abonner à l'état de chargement
+    this.dataCacheService.isLoading$.subscribe(loading => {
+      this.isLoading = loading;
+    });
+    
+    // Charger les données si pas encore en cache
     this.loadClients();
   }
 
   loadClients(): void {
-    this.clientService.getAll().subscribe({
-      next: (clients) => {
-        this.clients = clients;
+    console.log('👥 loadClients - Utilisation du cache');
+    
+    // Vérifier si on a déjà des données en cache
+    const cachedClients = this.dataCacheService.getClients();
+    if (cachedClients.length > 0) {
+      console.log('✅ Clients déjà en cache:', cachedClients.length);
+      this.clients = cachedClients;
+      this.isLoading = false;
+      return;
+    }
+    
+    // Sinon, charger via le service de cache
+    this.dataCacheService.getDashboardData().subscribe({
+      next: (data) => {
+        console.log('✅ Clients chargés via cache service');
       },
       error: (err) => {
-        this.errorMessage = 'Erreur lors du chargement des clients';
+        console.error('❌ ERREUR complète clients:', err);
+        this.errorMessage = 'Erreur lors du chargement des clients: ' + (err.message || 'Erreur inconnue');
+        this.isLoading = false;
+        this.clients = [];
       }
     });
   }
@@ -109,5 +147,24 @@ export class ClientsComponent implements OnInit {
         }
       });
     }
+  }
+
+  testConnection(): void {
+    console.log('🧪 Test connexion clients démarré');
+    console.log('🧪 Utilisateur authentifié:', this.authService.isAuthenticated());
+    console.log('🧪 Token présent:', !!this.authService.getToken());
+    
+    this.clientService.getAll().subscribe({
+      next: (clients) => {
+        console.log('🧪 ✅ Test clients réussi:', clients.length);
+        alert(`Test réussi: ${clients.length} clients trouvés`);
+        this.clients = clients;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('🧪 ❌ Test clients échoué:', err);
+        alert(`Test échoué: ${err.status} - ${err.message}`);
+      }
+    });
   }
 }

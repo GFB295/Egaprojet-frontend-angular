@@ -1,21 +1,53 @@
 <div class="dashboard">
-  <h1>Tableau de bord</h1>
+  <div class="dashboard-header">
+    <h1>Tableau de bord</h1>
+    <div class="header-buttons">
+      <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading">
+        {{ isLoading ? '🔄 Chargement...' : '🔄 Actualiser' }}
+      </button>
+      <button class="test-btn" (click)="testConnection()">
+        🧪 Test Connexion
+      </button>
+    </div>
+  </div>
   
-  <div class="stats-grid">
-    <div class="stat-card">
-      <h3>Clients</h3>
-      <p class="stat-number">{{ clientsCount }}</p>
-      <p class="stat-label">Nombre total de clients</p>
+  <div *ngIf="!authService.isAuthenticated()" class="auth-warning">
+    <p>⚠️ Vous devez être connecté pour voir les statistiques du dashboard.</p>
+    <a routerLink="/login" class="login-link">Se connecter</a>
+  </div>
+  
+  <div *ngIf="authService.isAuthenticated()" class="stats-grid">
+    <div class="stat-card clients">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <h3>Clients</h3>
+        <p class="stat-number">{{ clientsCount }}</p>
+        <p class="stat-label">Clients enregistrés</p>
+      </div>
     </div>
-    <div class="stat-card">
-      <h3>Comptes</h3>
-      <p class="stat-number">{{ comptesCount }}</p>
-      <p class="stat-label">Nombre total de comptes</p>
+    <div class="stat-card comptes">
+      <div class="stat-icon">🏦</div>
+      <div class="stat-content">
+        <h3>Comptes</h3>
+        <p class="stat-number">{{ comptesCount }}</p>
+        <p class="stat-label">Comptes ouverts</p>
+      </div>
     </div>
-    <div class="stat-card">
-      <h3>Transactions</h3>
-      <p class="stat-number">{{ transactionsCount }}</p>
-      <p class="stat-label">Nombre total de transactions</p>
+    <div class="stat-card transactions">
+      <div class="stat-icon">💳</div>
+      <div class="stat-content">
+        <h3>Transactions</h3>
+        <p class="stat-number">{{ transactionsCount }}</p>
+        <p class="stat-label">Transactions effectuées</p>
+      </div>
+    </div>
+    <div class="stat-card solde">
+      <div class="stat-icon">💰</div>
+      <div class="stat-content">
+        <h3>Solde Total</h3>
+        <p class="stat-number">{{ formatCurrency(totalSolde) }}</p>
+        <p class="stat-label">Solde global</p>
+      </div>
     </div>
   </div>
 

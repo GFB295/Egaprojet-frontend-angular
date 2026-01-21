@@ -9,6 +9,11 @@
   margin-bottom: 2rem;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
 .header h1 {
   color: #1e3a8a;
   margin: 0;
@@ -142,6 +147,15 @@
 
 .btn-primary:hover {
   background-color: #1e40af;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #059669;
 }
 
 .btn-secondary {
