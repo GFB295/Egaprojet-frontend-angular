@@ -44,28 +44,55 @@ export class LoginComponent {
     this.errorMessage = '';
     this.isLoading = true;
     
-    console.log('📤 Tentative de connexion:', this.loginForm.value);
+    const loginData = this.loginForm.value;
+    console.log('🚨 URGENCE - Tentative de connexion:', loginData);
+    console.log('🚨 DEBUG - Username:', JSON.stringify(loginData.username));
+    console.log('🚨 DEBUG - Password:', JSON.stringify(loginData.password));
+    console.log('🚨 DEBUG - Username length:', loginData.username?.length);
+    console.log('🚨 DEBUG - Password length:', loginData.password?.length);
     
-    this.authService.login(this.loginForm.value).subscribe({
+    // Utiliser le service AuthService au lieu d'un appel HTTP direct
+    this.authService.login(loginData).subscribe({
       next: (response) => {
-        console.log('✅ Connexion réussie ! Réponse:', response);
+        console.log('🚨 URGENCE - Connexion réussie:', response);
         this.isLoading = false;
-        // Rediriger selon le rôle
+        
+        // Redirection selon le rôle
         if (response.role === 'ROLE_ADMIN') {
-          this.router.navigate(['/dashboard']);
+          console.log('👑 ADMIN - Redirection dashboard');
+          this.router.navigate(['/dashboard']).then(success => {
+            if (success) {
+              console.log('✅ Navigation router réussie');
+            } else {
+              console.log('❌ Router échoué, problème de route');
+              console.log('🔍 Routes disponibles:', this.router.config);
+            }
+          }).catch(err => {
+            console.error('❌ Erreur navigation:', err);
+          });
         } else {
-          this.router.navigate(['/profil']);
+          console.log('👤 CLIENT - Redirection interface client');
+          this.router.navigate(['/profil']).then(success => {
+            if (success) {
+              console.log('✅ Navigation router réussie vers profil');
+            } else {
+              console.log('❌ Router échoué, problème de route');
+              console.log('🔍 Routes disponibles:', this.router.config);
+            }
+          }).catch(err => {
+            console.error('❌ Erreur navigation:', err);
+          });
         }
       },
       error: (err) => {
-        console.error('❌ Erreur connexion:', err);
+        console.error('🚨 URGENCE - Erreur connexion:', err);
+        console.error('🚨 DEBUG - Error details:', JSON.stringify(err, null, 2));
         this.isLoading = false;
-        if (err.status === 0) {
+        
+        if (err.message.includes('contacter le serveur')) {
           this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré sur le port 8080.';
-        } else if (err.status === 401) {
+        } else if (err.message.includes('Identifiants incorrects') || err.message.includes('Bad credentials')) {
           this.errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect.';
-        } else if (err.error?.message) {
-          this.errorMessage = err.error.message;
         } else {
           this.errorMessage = err.message || 'Erreur lors de la connexion';
         }

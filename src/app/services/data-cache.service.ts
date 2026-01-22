@@ -37,6 +37,26 @@ export class DataCacheService {
     private authService: AuthService
   ) {
     console.log('🗄️ DataCacheService initialisé');
+    
+    // Surveiller les changements d'authentification avec un délai
+    this.authService.currentUser$.subscribe(user => {
+      if (!user) {
+        console.log('🗄️ Utilisateur déconnecté, vidage du cache');
+        this.clearCache();
+      } else {
+        console.log('🗄️ Utilisateur connecté:', user.username, user.role);
+        // Attendre un peu avant de charger les données pour s'assurer que l'auth est stable
+        setTimeout(() => {
+          if (this.authService.isAuthenticated()) {
+            console.log('🗄️ Chargement automatique des données après connexion');
+            this.getDashboardData(true).subscribe({
+              next: (data) => console.log('✅ Données chargées automatiquement:', data.clientsCount, 'clients'),
+              error: (err) => console.error('❌ Erreur chargement auto:', err)
+            });
+          }
+        }, 500);
+      }
+    });
   }
 
   // Vérifier si les données en cache sont encore valides
@@ -51,10 +71,32 @@ export class DataCacheService {
   getDashboardData(forceRefresh: boolean = false): Observable<DashboardData> {
     console.log('🗄️ getDashboardData appelé, forceRefresh:', forceRefresh);
     
+    // Vérifier l'authentification avant tout
+    if (!this.authService.isAuthenticated()) {
+      console.log('❌ Utilisateur non authentifié, impossible de charger les données');
+      this.clearCache();
+      return of({
+        clients: [],
+        comptes: [],
+        transactions: [],
+        clientsCount: 0,
+        comptesCount: 0,
+        transactionsCount: 0,
+        totalSolde: 0,
+        lastUpdated: new Date()
+      });
+    }
+    
     // Si on a des données en cache et qu'elles sont valides, les retourner
-    const currentData = this.dashboardDataSubject.value;
+    const currentData = this.getCurrentCachedData();
     if (!forceRefresh && currentData && this.isCacheValid()) {
       console.log('✅ Données en cache valides, retour immédiat');
+      return of(currentData);
+    }
+
+    // Si on est déjà en train de charger, retourner les données actuelles si disponibles
+    if (this.isLoadingSubject.value && currentData) {
+      console.log('⏳ Chargement en cours, retour des données actuelles');
       return of(currentData);
     }
 
@@ -231,21 +273,26 @@ export class DataCacheService {
     return this.getDashboardData(true);
   }
 
+  // Obtenir les données actuelles du cache (synchrone)
+  getCurrentCachedData(): DashboardData | null {
+    return this.dashboardDataSubject.value;
+  }
+
   // Obtenir les clients depuis le cache
   getClients(): Client[] {
-    const data = this.dashboardDataSubject.value;
+    const data = this.getCurrentCachedData();
     return data ? data.clients : [];
   }
 
   // Obtenir les comptes depuis le cache
   getComptes(): Compte[] {
-    const data = this.dashboardDataSubject.value;
+    const data = this.getCurrentCachedData();
     return data ? data.comptes : [];
   }
 
   // Obtenir les transactions depuis le cache
   getTransactions(): Transaction[] {
-    const data = this.dashboardDataSubject.value;
+    const data = this.getCurrentCachedData();
     return data ? data.transactions : [];
   }
 

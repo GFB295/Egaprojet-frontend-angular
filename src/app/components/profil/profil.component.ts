@@ -1,11 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { ClientService, Client } from '../../services/client.service';
 import { CompteService, Compte } from '../../services/compte.service';
 import { TransactionService, Transaction, ReleveRequest } from '../../services/transaction.service';
+import { StableDataService, StableClientData } from '../../services/stable-data.service';
+
+// Interface pour les données de démonstration
+interface MockClient extends Client {
+  id: string;
+  nom: string;
+  prenom: string;
+  courriel: string;
+  telephone: string;
+  adresse: string;
+  dateNaissance: string;
+  nationalite: string;
+  sexe: string;
+}
 
 @Component({
   selector: 'app-profil',
@@ -14,137 +29,147 @@ import { TransactionService, Transaction, ReleveRequest } from '../../services/t
   templateUrl: './profil.component.html',
   styleUrls: ['./profil.component.css']
 })
-export class ProfilComponent implements OnInit {
+export class ProfilComponent implements OnInit, OnDestroy {
   client: Client | null = null;
   comptes: Compte[] = [];
   recentTransactions: Transaction[] = [];
   allTransactions: Transaction[] = [];
-  isLoading: boolean = true;
+  isLoading: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
   
-  // Pour le relevé PDF
+  private dataSubscription?: Subscription;
+  
+  // États des modals
+  showDepotForm: boolean = false;
+  showRetraitForm: boolean = false;
+  showVirementForm: boolean = false;
   showReleveForm: boolean = false;
+  showCreateAccountForm: boolean = false;
+  showEditForm: boolean = false;
+  
+  // Formulaires
+  depotForm = {
+    numeroCompte: '',
+    montant: 0,
+    description: ''
+  };
+  
+  retraitForm = {
+    numeroCompte: '',
+    montant: 0,
+    description: ''
+  };
+  
+  virementForm = {
+    compteSource: '',
+    compteDestinataire: '',
+    montant: 0,
+    description: ''
+  };
+  
   releveForm: ReleveRequest = {
     numeroCompte: '',
     dateDebut: '',
     dateFin: ''
   };
+  
+  createAccountForm = {
+    typeCompte: 'COURANT'
+  };
 
-  // Pour l'édition du profil
-  showEditForm: boolean = false;
   editForm: any = {};
 
   constructor(
     public authService: AuthService,
     private clientService: ClientService,
     private compteService: CompteService,
-    private transactionService: TransactionService
+    private transactionService: TransactionService,
+    private stableDataService: StableDataService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
-    console.log('ProfilComponent: Initialisation...');
-    this.loadClientData();
+    console.log('ProfilComponent: Initialisation avec données stables...');
     
-    // Recharger les données toutes les 30 secondes pour maintenir la fraîcheur
-    setInterval(() => {
-      if (!this.isLoading && this.client) {
-        this.loadRecentTransactions();
+    // S'abonner aux données stables
+    this.dataSubscription = this.stableDataService.clientData$.subscribe(
+      (data: StableClientData) => {
+        console.log('ProfilComponent: Nouvelles données stables reçues:', data);
+        this.updateComponentData(data);
       }
-    }, 30000);
-  }
-
-  loadClientData(): void {
-    console.log('ProfilComponent: Chargement des données client...');
-    this.isLoading = true;
-    this.errorMessage = '';
-    
-    const currentUser = this.authService.getCurrentUser();
-    console.log('Utilisateur actuel:', currentUser);
-    
-    if (!currentUser) {
-      this.errorMessage = 'Vous devez être connecté pour voir votre profil';
-      this.isLoading = false;
-      return;
-    }
-
-    if (!currentUser.clientId) {
-      this.errorMessage = 'Aucune information client disponible. Vous êtes peut-être un administrateur.';
-      this.isLoading = false;
-      return;
-    }
-
-    this.clientService.getById(currentUser.clientId).subscribe({
-      next: (client) => {
-        console.log('Client chargé avec succès:', client);
-        this.client = client;
-        this.loadComptes();
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement du client:', err);
-        this.errorMessage = 'Impossible de charger vos informations. Veuillez réessayer.';
-        this.isLoading = false;
-      }
-    });
-  }
-
-  loadComptes(): void {
-    console.log('ProfilComponent: Chargement des comptes...');
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser?.clientId) {
-      this.isLoading = false;
-      return;
-    }
-
-    this.compteService.getByClientId(currentUser.clientId).subscribe({
-      next: (comptes) => {
-        console.log('Comptes chargés:', comptes);
-        this.comptes = comptes;
-        this.loadRecentTransactions();
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des comptes:', err);
-        this.errorMessage = 'Erreur lors du chargement des comptes';
-        this.isLoading = false;
-      }
-    });
-  }
-
-  loadRecentTransactions(): void {
-    console.log('ProfilComponent: Chargement des transactions...');
-    if (this.comptes.length === 0) {
-      this.isLoading = false;
-      return;
-    }
-    
-    // Charger les transactions pour tous les comptes du client
-    const allTransactionsPromises = this.comptes.map(compte => 
-      this.transactionService.getByCompte(compte.numeroCompte).toPromise()
     );
+    
+    // Charger les données stables
+    this.stableDataService.loadStableData();
+  }
 
-    Promise.all(allTransactionsPromises).then(results => {
-      this.allTransactions = results
-        .filter(t => t !== undefined)
-        .flat() as Transaction[];
-      
-      // Trier par date (plus récentes en premier) et prendre les 10 dernières
-      this.allTransactions.sort((a, b) => {
-        const dateA = a.dateTransaction ? new Date(a.dateTransaction).getTime() : 0;
-        const dateB = b.dateTransaction ? new Date(b.dateTransaction).getTime() : 0;
-        return dateB - dateA;
-      });
-      
-      this.recentTransactions = this.allTransactions.slice(0, 10);
-      console.log('Transactions récentes chargées:', this.recentTransactions);
-      this.isLoading = false;
-    }).catch(err => {
-      console.error('Erreur lors du chargement des transactions:', err);
-      this.isLoading = false;
+  ngOnDestroy(): void {
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
+    }
+  }
+
+  private updateComponentData(data: StableClientData): void {
+    this.client = data.client;
+    this.comptes = data.comptes;
+    this.recentTransactions = data.recentTransactions;
+    this.allTransactions = data.allTransactions;
+    this.isLoading = data.isLoading;
+    
+    console.log('ProfilComponent: Données mises à jour:', {
+      client: this.client?.nom + ' ' + this.client?.prenom,
+      comptes: this.comptes.length,
+      transactions: this.recentTransactions.length
     });
+  }
+
+  // Méthode pour recharger les données réelles
+  reloadData(): void {
+    console.log('ProfilComponent: Rechargement des données...');
+    this.errorMessage = '';
+    this.successMessage = '';
+    
+    // Utiliser le service de données stables
+    this.stableDataService.refreshData();
+  }
+
+  private reloadClientDataAfterOperation(): void {
+    console.log('ProfilComponent: Rechargement après opération...');
+    
+    // Utiliser le service de données stables pour la mise à jour
+    this.stableDataService.updateAfterOperation();
+  }
+
+  // Méthode pour réinitialiser complètement toutes les données
+  resetAllData(): void {
+    const confirmation = confirm(
+      'ATTENTION: Cette action va supprimer TOUTES vos données (comptes, soldes, transactions). ' +
+      'Vous repartirez avec des comptes complètement vides. Êtes-vous sûr ?'
+    );
+    
+    if (confirmation) {
+      console.log('ProfilComponent: Réinitialisation complète demandée');
+      this.stableDataService.forceResetAllData();
+      
+      // Recharger les données après réinitialisation
+      setTimeout(() => {
+        this.stableDataService.loadStableData(true);
+      }, 500);
+      
+      this.successMessage = 'Toutes les données ont été réinitialisées. Vos comptes sont maintenant complètement vides.';
+      setTimeout(() => this.successMessage = '', 8000);
+    }
   }
 
   formatCurrency(amount: number | undefined): string {
-    if (amount === undefined) return '0.00 €';
+    if (amount === undefined || amount === null) return 'Aucun solde';
+    if (amount === 0) return 'Compte vide';
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+  }
+
+  formatCurrencySimple(amount: number | undefined): string {
+    if (amount === undefined || amount === null || amount === 0) return '0,00 €';
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
   }
 
@@ -209,6 +234,156 @@ export class ProfilComponent implements OnInit {
     });
   }
 
+  // Gestion des opérations bancaires
+  openDepotForm(): void {
+    if (this.comptes.length > 0) {
+      this.depotForm.numeroCompte = this.comptes[0].numeroCompte;
+    }
+    this.showDepotForm = true;
+  }
+
+  effectuerDepot(): void {
+    if (!this.depotForm.numeroCompte || this.depotForm.montant <= 0) {
+      this.errorMessage = 'Veuillez remplir tous les champs correctement';
+      return;
+    }
+
+    try {
+      // Utiliser le service de données stables pour l'opération
+      this.stableDataService.executeDepot(
+        this.depotForm.numeroCompte,
+        this.depotForm.montant,
+        this.depotForm.description || 'Dépôt'
+      );
+      
+      this.successMessage = `Dépôt de ${this.formatCurrency(this.depotForm.montant)} effectué avec succès`;
+      this.showDepotForm = false;
+      this.resetDepotForm();
+      setTimeout(() => this.successMessage = '', 5000);
+      
+    } catch (error: any) {
+      this.errorMessage = error.message || 'Erreur lors du dépôt';
+    }
+  }
+
+  openRetraitForm(): void {
+    if (this.comptes.length > 0) {
+      this.retraitForm.numeroCompte = this.comptes[0].numeroCompte;
+    }
+    this.showRetraitForm = true;
+  }
+
+  effectuerRetrait(): void {
+    if (!this.retraitForm.numeroCompte || this.retraitForm.montant <= 0) {
+      this.errorMessage = 'Veuillez remplir tous les champs correctement';
+      return;
+    }
+
+    try {
+      // Utiliser le service de données stables pour l'opération
+      this.stableDataService.executeRetrait(
+        this.retraitForm.numeroCompte,
+        this.retraitForm.montant,
+        this.retraitForm.description || 'Retrait'
+      );
+      
+      this.successMessage = `Retrait de ${this.formatCurrency(this.retraitForm.montant)} effectué avec succès`;
+      this.showRetraitForm = false;
+      this.resetRetraitForm();
+      setTimeout(() => this.successMessage = '', 5000);
+      
+    } catch (error: any) {
+      this.errorMessage = error.message || 'Erreur lors du retrait';
+    }
+  }
+
+  openVirementForm(): void {
+    if (this.comptes.length > 0) {
+      this.virementForm.compteSource = this.comptes[0].numeroCompte;
+    }
+    this.showVirementForm = true;
+  }
+
+  effectuerVirement(): void {
+    if (!this.virementForm.compteSource || !this.virementForm.compteDestinataire || this.virementForm.montant <= 0) {
+      this.errorMessage = 'Veuillez remplir tous les champs correctement';
+      return;
+    }
+
+    if (this.virementForm.compteSource === this.virementForm.compteDestinataire) {
+      this.errorMessage = 'Le compte source et destinataire ne peuvent pas être identiques';
+      return;
+    }
+
+    try {
+      // Utiliser le service de données stables pour l'opération
+      this.stableDataService.executeVirement(
+        this.virementForm.compteSource,
+        this.virementForm.compteDestinataire,
+        this.virementForm.montant,
+        this.virementForm.description || 'Virement'
+      );
+      
+      this.successMessage = `Virement de ${this.formatCurrency(this.virementForm.montant)} effectué avec succès`;
+      this.showVirementForm = false;
+      this.resetVirementForm();
+      setTimeout(() => this.successMessage = '', 5000);
+      
+    } catch (error: any) {
+      this.errorMessage = error.message || 'Erreur lors du virement';
+    }
+  }
+
+  openCreateAccountForm(): void {
+    console.log('ProfilComponent: Ouverture formulaire création compte...');
+    
+    // Réinitialiser le formulaire
+    this.createAccountForm.typeCompte = 'COURANT';
+    this.errorMessage = '';
+    this.successMessage = '';
+    
+    this.showCreateAccountForm = true;
+  }
+
+  creerCompte(): void {
+    try {
+      // Utiliser le service de données stables pour créer le compte
+      this.stableDataService.createNewAccount(this.createAccountForm.typeCompte as 'COURANT' | 'EPARGNE');
+      
+      this.successMessage = `Compte ${this.createAccountForm.typeCompte.toLowerCase()} créé avec succès`;
+      this.showCreateAccountForm = false;
+      
+      console.log('ProfilComponent: Nombre total de comptes:', this.comptes.length);
+      setTimeout(() => this.successMessage = '', 5000);
+      
+    } catch (error: any) {
+      this.errorMessage = error.message || 'Erreur lors de la création du compte';
+    }
+  }
+
+  getTotalSolde(): number {
+    return this.comptes.reduce((total, compte) => total + (compte.solde || 0), 0);
+  }
+
+  // Reset forms
+  resetDepotForm(): void {
+    this.depotForm = { numeroCompte: '', montant: 0, description: '' };
+  }
+
+  resetRetraitForm(): void {
+    this.retraitForm = { numeroCompte: '', montant: 0, description: '' };
+  }
+
+  resetVirementForm(): void {
+    this.virementForm = { compteSource: '', compteDestinataire: '', montant: 0, description: '' };
+  }
+
+  // Fermeture des modals
+  closeDepotForm(): void { this.showDepotForm = false; }
+  closeRetraitForm(): void { this.showRetraitForm = false; }
+  closeVirementForm(): void { this.showVirementForm = false; }
+  closeCreateAccountForm(): void { this.showCreateAccountForm = false; }
+
   openReleveForm(): void {
     if (this.comptes.length > 0) {
       this.releveForm.numeroCompte = this.comptes[0].numeroCompte;
@@ -238,23 +413,26 @@ export class ProfilComponent implements OnInit {
     }
 
     this.errorMessage = '';
-    this.transactionService.getReleve(this.releveForm).subscribe({
-      next: (transactions) => {
-        // Générer automatiquement le PDF
-        this.generatePDF(transactions);
-        this.successMessage = 'Relevé PDF téléchargé avec succès';
-        this.showReleveForm = false;
-        setTimeout(() => this.successMessage = '', 5000); // Augmenté à 5 secondes
-      },
-      error: (err) => {
-        console.error('Erreur lors de la génération du relevé:', err);
-        if (err.status === 403) {
-          this.errorMessage = 'Vous n\'avez pas accès aux relevés de ce compte';
-        } else {
-          this.errorMessage = err.error?.message || 'Erreur lors de la génération du relevé';
-        }
-      }
+    
+    // Filtrer les transactions pour ce compte et cette période
+    const dateDebut = new Date(this.releveForm.dateDebut);
+    const dateFin = new Date(this.releveForm.dateFin);
+    dateFin.setHours(23, 59, 59, 999); // Inclure toute la journée de fin
+    
+    const transactionsFiltrees = this.allTransactions.filter(transaction => {
+      if (transaction.compteNumero !== this.releveForm.numeroCompte) return false;
+      
+      const dateTransaction = new Date(transaction.dateTransaction || '');
+      return dateTransaction >= dateDebut && dateTransaction <= dateFin;
     });
+    
+    console.log('Transactions filtrées pour le relevé:', transactionsFiltrees.length);
+    
+    // Générer automatiquement le PDF
+    this.generatePDF(transactionsFiltrees);
+    this.successMessage = 'Relevé PDF téléchargé avec succès';
+    this.showReleveForm = false;
+    setTimeout(() => this.successMessage = '', 5000);
   }
 
   async generatePDF(transactions: Transaction[]): Promise<void> {

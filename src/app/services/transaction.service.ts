@@ -3,13 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Transaction {
-  id?: number;
+  id?: string;
   typeTransaction: 'DEPOT' | 'RETRAIT' | 'VIREMENT';
   montant: number;
   dateTransaction?: string;
-  compteId?: number;
+  compteId?: string;
   compteNumero?: string;
-  compteDestinataireId?: number;
+  compteDestinataireId?: string;
   compteDestinataireNumero?: string;
   description?: string;
   soldeApres?: number;

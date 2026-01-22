@@ -1,40 +1,66 @@
-/* Interface Client EGA Bank - Version Simplifiée */
+/* Interface Client EGA Bank - Styles */
 
-.client-interface {
+.client-dashboard {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  padding: 0;
-  margin: 0;
 }
 
 /* Header */
-.client-header {
+.dashboard-header {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 1rem 0;
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
-.client-header h1 {
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo-section h1 {
   margin: 0;
   color: #2c3e50;
   font-size: 1.8rem;
   font-weight: 700;
 }
 
-.user-info {
+.tagline {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.user-section {
   display: flex;
   align-items: center;
   gap: 1rem;
-  color: #2c3e50;
+}
+
+.user-info {
+  text-align: right;
+}
+
+.welcome {
+  display: block;
   font-weight: 600;
+  color: #2c3e50;
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  background: #ecf0f1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
 }
 
 .logout-btn {
@@ -54,7 +80,7 @@
 }
 
 /* Loading & Error States */
-.loading, .error {
+.loading-container, .error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -62,7 +88,6 @@
   min-height: 400px;
   color: white;
   text-align: center;
-  padding: 2rem;
 }
 
 .spinner {
@@ -80,12 +105,12 @@
   100% { transform: rotate(360deg); }
 }
 
-.error h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.5rem;
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
 }
 
-.error button {
+.btn-retry {
   background: #3498db;
   color: white;
   border: none;
@@ -96,17 +121,18 @@
   transition: all 0.3s ease;
 }
 
-.error button:hover {
+.btn-retry:hover {
   background: #2980b9;
   transform: translateY(-2px);
 }
 
-/* Success Message */
-.success {
+/* Success Banner */
+.success-banner {
   background: linear-gradient(135deg, #27ae60, #2ecc71);
   color: white;
   padding: 1rem 2rem;
-  margin: 1rem 2rem;
+  margin: 1rem auto;
+  max-width: 1200px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -119,14 +145,14 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Main Content */
-.client-content {
+/* Dashboard Content */
+.dashboard-content {
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 /* Sections */
@@ -146,6 +172,17 @@ section h2 {
   font-weight: 600;
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
 /* Overview Cards */
 .overview-cards {
   display: grid;
@@ -153,20 +190,27 @@ section h2 {
   gap: 1.5rem;
 }
 
-.card {
+.overview-card {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   padding: 1.5rem;
   border-radius: 12px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   transition: transform 0.3s ease;
 }
 
-.card:hover {
+.overview-card:hover {
   transform: translateY(-4px);
 }
 
-.card h3 {
+.card-icon {
+  font-size: 2.5rem;
+  opacity: 0.9;
+}
+
+.card-content h3 {
   margin: 0 0 0.5rem 0;
   font-size: 0.9rem;
   opacity: 0.9;
@@ -180,14 +224,14 @@ section h2 {
   margin: 0;
 }
 
-/* Action Buttons */
-.action-buttons {
+/* Quick Actions */
+.quick-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-.btn-action {
+.action-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -200,80 +244,107 @@ section h2 {
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
   color: white;
 }
 
-.btn-action.depot {
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
-}
-
-.btn-action.retrait {
+.action-btn.secondary {
   background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
 }
 
-.btn-action.virement {
+.action-btn.tertiary {
   background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
 }
 
-.btn-action.releve {
+.action-btn.quaternary {
   background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  color: white;
 }
 
-.btn-action.create {
-  background: linear-gradient(135deg, #f39c12, #e67e22);
-}
-
-.btn-action:hover {
+.action-btn:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
-/* Accounts */
-.accounts-list {
+.btn-icon {
+  font-size: 2rem;
+}
+
+.btn-text {
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Accounts Grid */
+.accounts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 1.5rem;
 }
 
-.account-item {
+.account-card {
   background: white;
   border: 2px solid #ecf0f1;
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-.account-item:hover {
+.account-card:hover {
   border-color: #3498db;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(52, 152, 219, 0.1);
 }
 
-.account-info {
-  flex: 1;
+.account-card.courant {
+  border-left: 4px solid #3498db;
+}
+
+.account-card.epargne {
+  border-left: 4px solid #27ae60;
+}
+
+.account-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .account-type {
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.account-number {
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-  color: #7f8c8d;
-  margin-bottom: 0.25rem;
+.type-icon {
+  font-size: 1.5rem;
+}
+
+.type-label {
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 .account-balance {
   font-size: 1.5rem;
   font-weight: 700;
   color: #27ae60;
+}
+
+.account-details {
+  margin-bottom: 1rem;
+}
+
+.account-number {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #7f8c8d;
   margin-bottom: 0.25rem;
 }
 
@@ -284,11 +355,10 @@ section h2 {
 
 .account-actions {
   display: flex;
-  flex-direction: column;
   gap: 0.5rem;
 }
 
-.account-actions button {
+.btn-small {
   background: #ecf0f1;
   color: #2c3e50;
   border: none;
@@ -299,12 +369,12 @@ section h2 {
   transition: all 0.3s ease;
 }
 
-.account-actions button:hover {
+.btn-small:hover {
   background: #3498db;
   color: white;
 }
 
-/* Transactions */
+/* Transactions List */
 .transactions-list {
   display: flex;
   flex-direction: column;
@@ -325,6 +395,18 @@ section h2 {
 .transaction-item:hover {
   border-color: #3498db;
   transform: translateX(4px);
+}
+
+.transaction-item.transaction-depot {
+  border-left: 4px solid #27ae60;
+}
+
+.transaction-item.transaction-retrait {
+  border-left: 4px solid #e74c3c;
+}
+
+.transaction-item.transaction-virement {
+  border-left: 4px solid #3498db;
 }
 
 .transaction-icon {
@@ -355,6 +437,12 @@ section h2 {
   font-family: 'Courier New', monospace;
 }
 
+.transaction-description {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
 .transaction-amount {
   text-align: right;
   font-weight: 700;
@@ -369,7 +457,18 @@ section h2 {
   color: #e74c3c;
 }
 
+.amount-sign {
+  font-size: 0.9rem;
+}
+
 /* Client Info */
+.client-info-card {
+  background: white;
+  border: 1px solid #ecf0f1;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -400,36 +499,68 @@ section h2 {
 }
 
 /* Empty States */
-.empty {
+.empty-state {
   text-align: center;
   padding: 3rem 1rem;
   color: #7f8c8d;
 }
 
-.empty h3 {
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
   margin: 0 0 0.5rem 0;
   color: #2c3e50;
 }
 
-.empty p {
+.empty-state p {
   margin: 0 0 1.5rem 0;
 }
 
 /* Buttons */
-.btn-primary {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  border: none;
+.btn-primary, .btn-secondary, .btn-create-account {
   padding: 0.75rem 1.5rem;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.btn-secondary {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.btn-secondary:hover {
+  background: #d5dbdb;
+}
+
+.btn-create-account {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.btn-create-account:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
 }
 
 /* Modals */
@@ -470,16 +601,55 @@ section h2 {
   }
 }
 
-.modal h3 {
-  margin: 0 0 1.5rem 0;
-  color: #2c3e50;
-  font-size: 1.2rem;
-  padding: 1.5rem 1.5rem 0;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #ecf0f1;
 }
 
+.modal-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #7f8c8d;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+/* Form Elements */
 .form-group {
   margin-bottom: 1.5rem;
-  padding: 0 1.5rem;
 }
 
 .form-group label {
@@ -490,8 +660,7 @@ section h2 {
   font-size: 0.9rem;
 }
 
-.form-group input,
-.form-group select {
+.form-input {
   width: 100%;
   padding: 0.75rem;
   border: 2px solid #ecf0f1;
@@ -501,73 +670,47 @@ section h2 {
   box-sizing: border-box;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.form-input:focus {
   outline: none;
   border-color: #3498db;
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid #ecf0f1;
-}
-
-.modal-actions button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.modal-actions button:first-child {
-  background: #ecf0f1;
-  color: #2c3e50;
-}
-
-.modal-actions button:first-child:hover {
-  background: #d5dbdb;
-}
-
-.modal-actions button:last-child {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-}
-
-.modal-actions button:last-child:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-}
-
-.info-note {
+.info-box {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 1rem;
-  margin: 1rem 1.5rem;
+  margin-top: 1rem;
 }
 
-.info-note p {
+.info-box p {
   margin: 0 0 0.5rem 0;
   font-weight: 600;
   color: #2c3e50;
 }
 
+.info-box ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.info-box li {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
-  .client-header {
+  .header-content {
+    padding: 0 1rem;
     flex-direction: column;
     gap: 1rem;
     text-align: center;
-    padding: 1rem;
   }
   
-  .client-content {
+  .dashboard-content {
     padding: 1rem;
   }
   
@@ -575,11 +718,11 @@ section h2 {
     grid-template-columns: 1fr;
   }
   
-  .action-buttons {
+  .quick-actions {
     grid-template-columns: repeat(2, 1fr);
   }
   
-  .accounts-list {
+  .accounts-grid {
     grid-template-columns: 1fr;
   }
   
@@ -601,107 +744,18 @@ section h2 {
   .transaction-amount {
     align-self: flex-end;
   }
-  
-  .account-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .account-actions {
-    flex-direction: row;
-    width: 100%;
-  }
 }
 
 @media (max-width: 480px) {
-  .action-buttons {
+  .quick-actions {
     grid-template-columns: 1fr;
   }
   
-  .modal-actions {
+  .account-actions {
     flex-direction: column;
   }
-}
-/* Styles pour les comptes vides */
-.account-balance.empty-balance {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 8px;
-  padding: 10px;
-  margin: 5px 0;
-}
-
-.empty-text {
-  color: #856404;
-  font-style: italic;
-  font-size: 0.9rem;
-  display: block;
-  text-align: center;
-}
-
-.balance-amount {
-  color: #27ae60;
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-/* Bouton retrait désactivé pour comptes vides */
-.account-actions button:disabled {
-  background: #bdc3c7;
-  color: #7f8c8d;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.account-actions button:disabled:hover {
-  background: #bdc3c7;
-  transform: none;
-}
-
-/* Message d'encouragement pour les comptes vides */
-.empty-account-message {
-  background: linear-gradient(135deg, #74b9ff, #0984e3);
-  color: white;
-  padding: 15px;
-  border-radius: 10px;
-  text-align: center;
-  margin: 10px 0;
-  box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
-}
-
-.empty-account-message h4 {
-  margin: 0 0 10px 0;
-  font-size: 1.1rem;
-}
-
-.empty-account-message p {
-  margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-/* Styles pour le solde total vide */
-.amount.empty-total {
-  background: #f8f9fa;
-  border: 2px dashed #dee2e6;
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.empty-total-text {
-  color: #6c757d;
-  font-style: italic;
-  font-size: 0.9rem;
-  font-weight: normal;
-}
-/* Bouton de réinitialisation */
-.btn-action.reset {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  border: 2px solid #c0392b;
-}
-
-.btn-action.reset:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+  
+  .modal-footer {
+    flex-direction: column;
+  }
 }

@@ -37,9 +37,15 @@ export class CompteService {
     return this.http.get<Compte[]>(`${this.apiUrl}/client/${clientId}`);
   }
 
-  create(clientId: string, typeCompte: 'COURANT' | 'EPARGNE'): Observable<Compte> {
+  // Method overloads for better TypeScript support
+  create(clientId: string): Observable<Compte>;
+  create(clientId: string, typeCompte: 'COURANT' | 'EPARGNE'): Observable<Compte>;
+  create(clientId: string, typeCompte?: 'COURANT' | 'EPARGNE'): Observable<Compte> {
+    // Default to COURANT if no type specified
+    const accountType: 'COURANT' | 'EPARGNE' = typeCompte ?? 'COURANT';
+    
     return this.http.post<Compte>(`${this.apiUrl}/client/${clientId}`, null, {
-      params: { typeCompte }
+      params: { typeCompte: accountType }
     });
   }
 

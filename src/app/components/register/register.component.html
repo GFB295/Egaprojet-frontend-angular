@@ -94,10 +94,29 @@
         </div>
       </div>
 
-      <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+      <!-- Messages de statut -->
+      <div class="status-messages">
+        <div class="success-message" *ngIf="successMessage">
+          <i class="icon-success">✅</i>
+          {{ successMessage }}
+        </div>
+        
+        <div class="error-message" *ngIf="errorMessage">
+          <i class="icon-error">❌</i>
+          {{ errorMessage }}
+        </div>
+        
+        <div class="loading-message" *ngIf="isLoading">
+          <i class="icon-loading">⏳</i>
+          Inscription en cours...
+        </div>
+      </div>
 
-      <button type="submit" class="btn btn-primary" [disabled]="registerForm.invalid">
-        S'inscrire
+      <button type="submit" class="btn btn-primary" [disabled]="registerForm.invalid || isLoading">
+        <span *ngIf="!isLoading">S'inscrire</span>
+        <span *ngIf="isLoading">
+          <i class="spinner">⏳</i> Inscription...
+        </span>
       </button>
       
       <div *ngIf="registerForm.invalid && registerForm.touched" class="form-error-hint">

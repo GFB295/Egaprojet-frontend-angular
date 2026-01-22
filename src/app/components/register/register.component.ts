@@ -14,6 +14,8 @@ import { AuthService } from '../../services/auth.service';
 export class RegisterComponent {
   registerForm: FormGroup;
   errorMessage: string = '';
+  successMessage: string = '';
+  isLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -43,48 +45,60 @@ export class RegisterComponent {
           control.markAsTouched();
         }
       });
+      this.errorMessage = 'Veuillez corriger les erreurs dans le formulaire.';
       return;
     }
 
     this.errorMessage = '';
+    this.successMessage = '';
+    this.isLoading = true;
     
     // Préparer les données pour l'envoi
     const formData = { ...this.registerForm.value };
     
-    console.log('📤 Envoi des données d\'inscription:', formData);
+    console.log('🚨 URGENCE - Inscription client:', formData);
     
+    // Utiliser le service AuthService au lieu d'un appel HTTP direct
     this.authService.register(formData).subscribe({
       next: (response) => {
-        console.log('✅ Inscription réussie ! Réponse:', response);
-        // Rediriger selon le rôle (les nouveaux clients vont vers profil)
-        if (response.role === 'ROLE_ADMIN') {
-          this.router.navigate(['/dashboard']);
-        } else {
-          this.router.navigate(['/profil']);
-        }
+        console.log('🚨 URGENCE - Inscription réussie:', response);
+        this.isLoading = false;
+        this.successMessage = 'Inscription réussie ! Redirection en cours...';
+        
+        console.log('🚨 URGENCE - Redirection vers profil...');
+        
+        // Redirection selon le rôle
+        setTimeout(() => {
+          if (response.role === 'ROLE_ADMIN') {
+            this.router.navigate(['/dashboard']).then(success => {
+              if (success) {
+                console.log('✅ Navigation admin réussie');
+              } else {
+                console.log('❌ Échec navigation admin');
+              }
+            });
+          } else {
+            this.router.navigate(['/profil']).then(success => {
+              if (success) {
+                console.log('✅ Navigation client réussie');
+              } else {
+                console.log('❌ Échec navigation client');
+              }
+            });
+          }
+        }, 1000);
       },
       error: (err) => {
-        console.error('❌ Erreur inscription:', err);
-        console.error('Status:', err.status);
-        console.error('Status Text:', err.statusText);
-        console.error('Message:', err.message);
-        console.error('Error body:', err.error);
+        console.error('🚨 URGENCE - Erreur inscription:', err);
+        this.isLoading = false;
+        this.successMessage = '';
         
-        if (err.status === 0) {
+        if (err.message.includes('contacter le serveur')) {
           this.errorMessage = 'Impossible de se connecter au serveur. Vérifiez que le backend est démarré sur le port 8080.';
-        } else if (err.status === 400 && err.error) {
-          // Erreurs de validation du backend
-          if (typeof err.error === 'string') {
-            this.errorMessage = err.error;
-          } else if (err.error.message) {
-            this.errorMessage = err.error.message;
-          } else {
-            // Erreurs de validation multiples
-            const errorMessages = Object.values(err.error).join(', ');
-            this.errorMessage = errorMessages || 'Erreur de validation';
-          }
+        } else if (err.message.includes('existe déjà')) {
+          this.errorMessage = 'Un compte avec ce nom d\'utilisateur ou cette adresse email existe déjà.';
         } else {
-          this.errorMessage = err.error?.message || err.message || 'Erreur lors de l\'inscription';
+          this.errorMessage = err.message || 'Erreur lors de l\'inscription. Veuillez réessayer.';
         }
       }
     });

@@ -38,7 +38,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('🚀 Dashboard ngOnInit - DÉBUT avec cache');
     console.log('🚀 Dashboard ngOnInit - Utilisateur connecté:', this.authService.isAuthenticated());
     
-    // S'abonner aux données du cache
+    // S'abonner aux données du cache IMMÉDIATEMENT
     this.dataCacheService.dashboardData$.subscribe(data => {
       if (data) {
         console.log('📊 Données reçues du cache:', data);
@@ -47,16 +47,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.transactionsCount = data.transactionsCount;
         this.totalSolde = data.totalSolde;
         this.recentTransactions = data.transactions.slice(0, 5);
+        this.isLoading = false; // Arrêter le loading dès qu'on a des données
       }
     });
 
     // S'abonner à l'état de chargement
     this.dataCacheService.isLoading$.subscribe(loading => {
-      this.isLoading = loading;
+      // Ne mettre en loading que si on n'a pas encore de données
+      const currentData = this.dataCacheService.getCurrentCachedData();
+      if (!currentData) {
+        this.isLoading = loading;
+      }
     });
     
-    // Charger les données (depuis le cache ou l'API)
-    this.loadDashboardData();
+    // Vérifier si on a déjà des données en cache
+    const cachedData = this.dataCacheService.getCurrentCachedData();
+    if (cachedData) {
+      console.log('✅ Données déjà en cache, affichage immédiat');
+      this.clientsCount = cachedData.clientsCount;
+      this.comptesCount = cachedData.comptesCount;
+      this.transactionsCount = cachedData.transactionsCount;
+      this.totalSolde = cachedData.totalSolde;
+      this.recentTransactions = cachedData.transactions.slice(0, 5);
+      this.isLoading = false;
+    } else {
+      // Charger les données seulement si pas en cache
+      console.log('🔄 Pas de données en cache, chargement...');
+      this.loadDashboardData();
+    }
     
     // Rafraîchir automatiquement toutes les 60 secondes
     this.refreshSubscription = interval(60000).subscribe(() => {

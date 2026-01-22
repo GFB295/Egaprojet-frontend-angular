@@ -1,7 +1,7 @@
 import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, catchError, throwError, timer } from 'rxjs';
+import { Observable, BehaviorSubject, tap, catchError, throwError, timer, of } from 'rxjs';
 import { Router } from '@angular/router';
 
 export interface AuthRequest {
@@ -29,7 +29,7 @@ export interface AuthResponse {
   username: string;
   clientId: string | null;
   role: string;
-  expiresIn?: number; // Durée en secondes
+  expiresIn?: number;
 }
 
 @Injectable({
@@ -40,42 +40,74 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<AuthResponse | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   
+  // Exposer le subject pour les corrections d'urgence
+  public get currentUserSubjectPublic() { return this.currentUserSubject; }
+  
   private tokenExpirationTimer?: any;
   private readonly TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes avant expiration
+  private isInitialized = false;
 
   constructor(
     private http: HttpClient,
     private router: Router,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
+    console.log('🔐 AuthService constructor appelé');
     if (isPlatformBrowser(this.platformId)) {
-      this.initializeAuthState();
+      // Forcer l'initialisation immédiate
+      setTimeout(() => {
+        this.initializeAuthState();
+      }, 0);
     }
   }
 
   private initializeAuthState(): void {
+    if (this.isInitialized || !isPlatformBrowser(this.platformId)) return;
+    
+    console.log('🔐 Initialisation AuthService...');
+    
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('currentUser');
     const tokenExpiry = localStorage.getItem('tokenExpiry');
+    
+    console.log('🔐 Données localStorage:');
+    console.log('  - Token:', token ? `${token.substring(0, 20)}...` : 'null');
+    console.log('  - User:', userStr ? 'présent' : 'null');
+    console.log('  - Expiry:', tokenExpiry ? new Date(parseInt(tokenExpiry)).toLocaleString() : 'null');
     
     if (token && userStr && tokenExpiry) {
       const expiryTime = parseInt(tokenExpiry);
       const now = Date.now();
       
+      console.log('🔐 Vérification expiration:', now < expiryTime ? 'valide' : 'expiré');
+      
       if (now < expiryTime) {
-        console.log('🔐 Token valide trouvé, restauration de la session');
-        this.currentUserSubject.next(JSON.parse(userStr));
-        this.scheduleTokenRefresh(expiryTime - now);
+        try {
+          const user = JSON.parse(userStr);
+          console.log('🔐 ✅ Restauration session:', user.username, user.role);
+          this.currentUserSubject.next(user);
+          this.scheduleTokenRefresh(expiryTime - now);
+        } catch (e) {
+          console.error('🔐 ❌ Erreur parsing user data:', e);
+          this.clearAuthData();
+        }
       } else {
         console.log('🔐 Token expiré, nettoyage');
         this.clearAuthData();
       }
+    } else {
+      console.log('🔐 Aucune session sauvegardée trouvée');
     }
+    
+    this.isInitialized = true;
+    console.log('🔐 Initialisation terminée. État final:', this.isAuthenticated());
   }
 
   register(request: RegisterRequest): Observable<AuthResponse> {
+    console.log('📝 Tentative d\'inscription pour:', request.username);
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, request).pipe(
       tap(response => {
+        console.log('✅ Inscription réussie:', response.username, response.role);
         this.setAuthData(response);
       }),
       catchError(this.handleAuthError.bind(this))
@@ -104,9 +136,14 @@ export class AuthService {
       const token = localStorage.getItem('token');
       const tokenExpiry = localStorage.getItem('tokenExpiry');
       
+      console.log('🔐 getToken() appelé - Token présent:', !!token, 'Expiry présent:', !!tokenExpiry);
+      
       if (token && tokenExpiry) {
         const expiryTime = parseInt(tokenExpiry);
-        if (Date.now() < expiryTime) {
+        const now = Date.now();
+        console.log('🔐 Vérification expiration:', now < expiryTime ? 'valide' : 'expiré');
+        
+        if (now < expiryTime) {
           return token;
         } else {
           console.log('🔐 Token expiré, nettoyage automatique');
@@ -118,31 +155,81 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
+    // Ne pas initialiser côté serveur
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
+    
+    // Forcer la réinitialisation si pas encore fait
+    if (!this.isInitialized) {
+      console.log('🔐 Service non initialisé, initialisation forcée');
+      this.initializeAuthState();
+    }
+    
     const token = this.getToken();
-    const isAuth = !!token;
+    const user = this.getCurrentUser();
+    const isAuth = !!(token && user);
+    
     console.log('🔐 Vérification authentification:', isAuth);
+    console.log('  - Token:', !!token);
+    console.log('  - User:', !!user);
+    console.log('  - User details:', user ? `${user.username} (${user.role})` : 'null');
+    
     return isAuth;
   }
 
   getCurrentUser(): AuthResponse | null {
-    return this.currentUserSubject.value;
+    // Ne pas initialiser côté serveur
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+    
+    // Forcer la réinitialisation si pas encore fait
+    if (!this.isInitialized) {
+      console.log('🔐 getCurrentUser: Service non initialisé, initialisation forcée');
+      this.initializeAuthState();
+    }
+    
+    const user = this.currentUserSubject.value;
+    console.log('🔐 getCurrentUser() appelé - User:', user ? `${user.username} (${user.role})` : 'null');
+    return user;
   }
 
   isAdmin(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
+    
     const user = this.getCurrentUser();
-    return user?.role === 'ROLE_ADMIN';
+    const isAdminRole = user?.role === 'ROLE_ADMIN';
+    console.log('👑 Vérification admin:', isAdminRole, 'Role:', user?.role);
+    return isAdminRole;
   }
 
   isClient(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
+    
     const user = this.getCurrentUser();
-    return user?.role === 'ROLE_CLIENT' || !user?.role;
+    const isClientRole = user?.role === 'ROLE_CLIENT';
+    console.log('👤 Vérification client:', isClientRole, 'Role:', user?.role);
+    return isClientRole;
   }
 
   // Méthode pour gérer les erreurs 401/403
   handleUnauthorized(): void {
     console.log('🔐 Erreur 401/403 détectée, déconnexion forcée');
+    
+    // Éviter les boucles infinies
+    if (this.router.url === '/login') {
+      return;
+    }
+    
     this.clearAuthData();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login']).then(() => {
+      console.log('🔐 Redirection vers login terminée');
+    });
   }
 
   // Vérifier si le token expire bientôt
@@ -158,6 +245,31 @@ export class AuthService {
     return timeUntilExpiry < this.TOKEN_REFRESH_THRESHOLD;
   }
 
+  // Méthode pour forcer la réinitialisation de l'état d'authentification
+  reinitializeAuth(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    
+    console.log('🔄 Réinitialisation forcée de l\'authentification');
+    this.isInitialized = false;
+    this.initializeAuthState();
+    
+    // Forcer la mise à jour du subject avec les données actuelles
+    const token = this.getToken();
+    const userStr = localStorage.getItem('currentUser');
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        console.log('🔄 Restauration utilisateur:', user.username, user.role);
+        this.currentUserSubject.next(user);
+      } catch (e) {
+        console.error('❌ Erreur parsing user data:', e);
+        this.clearAuthData();
+      }
+    }
+  }
+
   private setAuthData(response: AuthResponse): void {
     if (isPlatformBrowser(this.platformId)) {
       // Calculer l'expiration (par défaut 24h si non spécifié)
@@ -169,6 +281,7 @@ export class AuthService {
       localStorage.setItem('tokenExpiry', expiryTime.toString());
       
       console.log('🔐 Données d\'authentification sauvegardées');
+      console.log('🔐 Utilisateur:', response.username, 'Role:', response.role);
       console.log('🔐 Expiration prévue:', new Date(expiryTime).toLocaleString());
       
       this.scheduleTokenRefresh(expiresInMs - this.TOKEN_REFRESH_THRESHOLD);
@@ -181,6 +294,7 @@ export class AuthService {
       localStorage.removeItem('token');
       localStorage.removeItem('currentUser');
       localStorage.removeItem('tokenExpiry');
+      console.log('🗑️ Données d\'authentification supprimées');
     }
     
     if (this.tokenExpirationTimer) {

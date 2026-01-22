@@ -180,22 +180,31 @@ export class TransactionsComponent implements OnInit {
           const montant = this.formatCurrency(this.depotForm.value.montant);
           const soldeApres = transaction.soldeApres ? this.formatCurrency(transaction.soldeApres) : '';
           this.successMessage = `Dépôt de ${montant} effectué avec succès sur le compte ${this.depotForm.value.numeroCompte}. Nouveau solde: ${soldeApres}`;
+          
           // Ajouter une notification
           this.notificationService.addTransactionNotification(
             'DEPOT',
             this.depotForm.value.montant,
             this.depotForm.value.numeroCompte
           );
-          this.loadComptes();
-          // Recharger les transactions après succès
-          setTimeout(() => {
-            this.loadTransactions();
-          }, 500);
+          
+          // Actualiser le cache immédiatement
+          console.log('🔄 Actualisation du cache après dépôt...');
+          this.dataCacheService.refreshData().subscribe({
+            next: () => {
+              console.log('✅ Cache actualisé après dépôt');
+            },
+            error: (err) => {
+              console.error('❌ Erreur actualisation cache:', err);
+            }
+          });
+          
+          // Fermer le formulaire après 3 secondes avec feedback
           setTimeout(() => {
             this.closeForms();
             this.showSuccessAnimation = false;
             this.successMessage = '';
-          }, 5000); // Augmenté à 5 secondes pour dépôt
+          }, 3000); // Réduit à 3 secondes pour une meilleure UX
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Erreur lors du dépôt';
@@ -215,22 +224,31 @@ export class TransactionsComponent implements OnInit {
           const montant = this.formatCurrency(this.retraitForm.value.montant);
           const soldeApres = transaction.soldeApres ? this.formatCurrency(transaction.soldeApres) : '';
           this.successMessage = `Retrait de ${montant} effectué avec succès sur le compte ${this.retraitForm.value.numeroCompte}. Nouveau solde: ${soldeApres}`;
+          
           // Ajouter une notification
           this.notificationService.addTransactionNotification(
             'RETRAIT',
             this.retraitForm.value.montant,
             this.retraitForm.value.numeroCompte
           );
-          this.loadComptes();
-          // Recharger les transactions après succès
-          setTimeout(() => {
-            this.loadTransactions();
-          }, 500);
+          
+          // Actualiser le cache immédiatement
+          console.log('🔄 Actualisation du cache après retrait...');
+          this.dataCacheService.refreshData().subscribe({
+            next: () => {
+              console.log('✅ Cache actualisé après retrait');
+            },
+            error: (err) => {
+              console.error('❌ Erreur actualisation cache:', err);
+            }
+          });
+          
+          // Fermer le formulaire après 3 secondes avec feedback
           setTimeout(() => {
             this.closeForms();
             this.showSuccessAnimation = false;
             this.successMessage = '';
-          }, 5000); // Augmenté à 5 secondes pour retrait
+          }, 3000); // Réduit à 3 secondes pour une meilleure UX
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Erreur lors du retrait';
@@ -254,22 +272,31 @@ export class TransactionsComponent implements OnInit {
           const montant = this.formatCurrency(this.virementForm.value.montant);
           const soldeApres = transaction.soldeApres ? this.formatCurrency(transaction.soldeApres) : '';
           this.successMessage = `Virement de ${montant} effectué avec succès depuis le compte ${this.virementForm.value.compteSource} vers ${this.virementForm.value.compteDestinataire}. Nouveau solde compte source: ${soldeApres}`;
+          
           // Ajouter une notification
           this.notificationService.addTransactionNotification(
             'VIREMENT',
             this.virementForm.value.montant,
             this.virementForm.value.compteSource
           );
-          this.loadComptes();
-          // Recharger les transactions après succès
-          setTimeout(() => {
-            this.loadTransactions();
-          }, 500);
+          
+          // Actualiser le cache immédiatement
+          console.log('🔄 Actualisation du cache après virement...');
+          this.dataCacheService.refreshData().subscribe({
+            next: () => {
+              console.log('✅ Cache actualisé après virement');
+            },
+            error: (err) => {
+              console.error('❌ Erreur actualisation cache:', err);
+            }
+          });
+          
+          // Fermer le formulaire après 3 secondes avec feedback
           setTimeout(() => {
             this.closeForms();
             this.showSuccessAnimation = false;
             this.successMessage = '';
-          }, 5000); // Augmenté à 5 secondes pour virement
+          }, 3000); // Réduit à 3 secondes pour une meilleure UX
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Erreur lors du virement';

@@ -1,0 +1,374 @@
+<!-- Interface Client EGA Bank -->
+<div class="client-dashboard">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1>🏦 EGA BANK</h1>
+        <span class="tagline">Votre banque digitale</span>
+      </div>
+      <div class="user-section">
+        <div class="user-info" *ngIf="client">
+          <span class="welcome">Bonjour, {{ client.prenom }} {{ client.nom }}</span>
+          <span class="user-role">Client</span>
+        </div>
+        <button class="logout-btn" (click)="logout()">
+          🚪 Déconnexion
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement de votre espace client...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoading && errorMessage" class="error-container">
+    <div class="error-icon">⚠️</div>
+    <h3>Erreur</h3>
+    <p>{{ errorMessage }}</p>
+    <button class="btn-retry" (click)="loadClientData()">Réessayer</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="success-banner">
+    <span class="success-icon">✅</span>
+    {{ successMessage }}
+  </div>
+
+  <!-- Main Dashboard -->
+  <div *ngIf="!isLoading && !errorMessage && client" class="dashboard-content">
+    
+    <!-- Vue d'ensemble -->
+    <section class="overview-section">
+      <h2>📊 Vue d'ensemble</h2>
+      <div class="overview-cards">
+        <div class="overview-card total-balance">
+          <div class="card-icon">💰</div>
+          <div class="card-content">
+            <h3>Solde total</h3>
+            <div class="amount">{{ formatCurrency(getTotalSolde()) }}</div>
+          </div>
+        </div>
+        <div class="overview-card accounts-count">
+          <div class="card-icon">🏦</div>
+          <div class="card-content">
+            <h3>Mes comptes</h3>
+            <div class="count">{{ comptes.length }} compte(s)</div>
+          </div>
+        </div>
+        <div class="overview-card transactions-count">
+          <div class="card-icon">📈</div>
+          <div class="card-content">
+            <h3>Transactions récentes</h3>
+            <div class="count">{{ recentTransactions.length }} transaction(s)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Actions rapides -->
+    <section class="quick-actions-section">
+      <h2>⚡ Actions rapides</h2>
+      <div class="quick-actions">
+        <button class="action-btn primary" (click)="openDepotForm()">
+          <span class="btn-icon">⬇️</span>
+          <span class="btn-text">Effectuer un dépôt</span>
+        </button>
+        <button class="action-btn secondary" (click)="openRetraitForm()">
+          <span class="btn-icon">⬆️</span>
+          <span class="btn-text">Effectuer un retrait</span>
+        </button>
+        <button class="action-btn tertiary" (click)="openVirementForm()">
+          <span class="btn-icon">↔️</span>
+          <span class="btn-text">Faire un virement</span>
+        </button>
+        <button class="action-btn quaternary" (click)="openReleveForm()">
+          <span class="btn-icon">📄</span>
+          <span class="btn-text">Télécharger relevé</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Mes comptes -->
+    <section class="accounts-section">
+      <div class="section-header">
+        <h2>💳 Mes comptes bancaires</h2>
+        <button class="btn-create-account" (click)="openCreateAccountForm()">
+          ➕ Créer un compte
+        </button>
+      </div>
+      
+      <div *ngIf="comptes.length === 0" class="empty-state">
+        <div class="empty-icon">🏦</div>
+        <h3>Aucun compte</h3>
+        <p>Vous n'avez pas encore de compte bancaire.</p>
+        <button class="btn-primary" (click)="openCreateAccountForm()">
+          Créer mon premier compte
+        </button>
+      </div>
+      
+      <div *ngIf="comptes.length > 0" class="accounts-grid">
+        <div *ngFor="let compte of comptes" class="account-card" [class]="compte.typeCompte.toLowerCase()">
+          <div class="account-header">
+            <div class="account-type">
+              <span class="type-icon">{{ compte.typeCompte === 'COURANT' ? '🏦' : '💰' }}</span>
+              <span class="type-label">{{ compte.typeCompte === 'COURANT' ? 'Compte Courant' : 'Compte Épargne' }}</span>
+            </div>
+            <div class="account-balance">{{ formatCurrency(compte.solde) }}</div>
+          </div>
+          <div class="account-details">
+            <div class="account-number">{{ compte.numeroCompte }}</div>
+            <div class="account-date">Ouvert le {{ formatDate(compte.dateCreation) }}</div>
+          </div>
+          <div class="account-actions">
+            <button class="btn-small" (click)="depotForm.numeroCompte = compte.numeroCompte; openDepotForm()">
+              Dépôt
+            </button>
+            <button class="btn-small" (click)="retraitForm.numeroCompte = compte.numeroCompte; openRetraitForm()">
+              Retrait
+            </button>
+            <button class="btn-small" (click)="releveForm.numeroCompte = compte.numeroCompte; openReleveForm()">
+              Relevé
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transactions récentes -->
+    <section class="transactions-section">
+      <h2>📊 Transactions récentes</h2>
+      
+      <div *ngIf="recentTransactions.length === 0" class="empty-state">
+        <div class="empty-icon">📈</div>
+        <h3>Aucune transaction</h3>
+        <p>Vous n'avez pas encore effectué de transactions.</p>
+      </div>
+      
+      <div *ngIf="recentTransactions.length > 0" class="transactions-list">
+        <div *ngFor="let transaction of recentTransactions" 
+             class="transaction-item" 
+             [class]="'transaction-' + transaction.typeTransaction.toLowerCase()">
+          <div class="transaction-icon">
+            <span *ngIf="transaction.typeTransaction === 'DEPOT'">⬇️</span>
+            <span *ngIf="transaction.typeTransaction === 'RETRAIT'">⬆️</span>
+            <span *ngIf="transaction.typeTransaction === 'VIREMENT'">↔️</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-type">{{ getTransactionTypeLabel(transaction.typeTransaction) }}</div>
+            <div class="transaction-date">{{ formatDateTime(transaction.dateTransaction) }}</div>
+            <div class="transaction-account">{{ transaction.compteNumero }}</div>
+            <div class="transaction-description" *ngIf="transaction.description">{{ transaction.description }}</div>
+          </div>
+          <div class="transaction-amount" [class]="transaction.typeTransaction === 'DEPOT' ? 'positive' : 'negative'">
+            <span class="amount-sign">{{ transaction.typeTransaction === 'DEPOT' ? '+' : '-' }}</span>
+            <span class="amount-value">{{ formatCurrency(transaction.montant) }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Informations client -->
+    <section class="client-info-section">
+      <h2>👤 Mes informations</h2>
+      <div class="client-info-card">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Nom complet</label>
+            <span>{{ client.nom }} {{ client.prenom }}</span>
+          </div>
+          <div class="info-item">
+            <label>Email</label>
+            <span>{{ client.courriel }}</span>
+          </div>
+          <div class="info-item">
+            <label>Téléphone</label>
+            <span>{{ client.telephone }}</span>
+          </div>
+          <div class="info-item">
+            <label>Date de naissance</label>
+            <span>{{ formatDate(client.dateNaissance) }}</span>
+          </div>
+          <div class="info-item full-width">
+            <label>Adresse</label>
+            <span>{{ client.adresse }}</span>
+          </div>
+          <div class="info-item">
+            <label>Nationalité</label>
+            <span>{{ client.nationalite }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Modal Dépôt -->
+  <div *ngIf="showDepotForm" class="modal-overlay" (click)="closeDepotForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⬇️ Effectuer un dépôt</h3>
+        <button class="modal-close" (click)="closeDepotForm()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Compte à créditer</label>
+          <select [(ngModel)]="depotForm.numeroCompte" class="form-input">
+            <option *ngFor="let compte of comptes" [value]="compte.numeroCompte">
+              {{ compte.numeroCompte }} - {{ compte.typeCompte }} ({{ formatCurrency(compte.solde) }})
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Montant (€)</label>
+          <input type="number" [(ngModel)]="depotForm.montant" class="form-input" min="0.01" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label>Description (optionnel)</label>
+          <input type="text" [(ngModel)]="depotForm.description" class="form-input" placeholder="Ex: Salaire, remboursement..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDepotForm()">Annuler</button>
+        <button class="btn-primary" (click)="effectuerDepot()">Effectuer le dépôt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Retrait -->
+  <div *ngIf="showRetraitForm" class="modal-overlay" (click)="closeRetraitForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⬆️ Effectuer un retrait</h3>
+        <button class="modal-close" (click)="closeRetraitForm()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Compte à débiter</label>
+          <select [(ngModel)]="retraitForm.numeroCompte" class="form-input">
+            <option *ngFor="let compte of comptes" [value]="compte.numeroCompte">
+              {{ compte.numeroCompte }} - {{ compte.typeCompte }} ({{ formatCurrency(compte.solde) }})
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Montant (€)</label>
+          <input type="number" [(ngModel)]="retraitForm.montant" class="form-input" min="0.01" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label>Description (optionnel)</label>
+          <input type="text" [(ngModel)]="retraitForm.description" class="form-input" placeholder="Ex: Achat, frais..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeRetraitForm()">Annuler</button>
+        <button class="btn-primary" (click)="effectuerRetrait()">Effectuer le retrait</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Virement -->
+  <div *ngIf="showVirementForm" class="modal-overlay" (click)="closeVirementForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>↔️ Effectuer un virement</h3>
+        <button class="modal-close" (click)="closeVirementForm()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Compte source</label>
+          <select [(ngModel)]="virementForm.compteSource" class="form-input">
+            <option *ngFor="let compte of comptes" [value]="compte.numeroCompte">
+              {{ compte.numeroCompte }} - {{ compte.typeCompte }} ({{ formatCurrency(compte.solde) }})
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Compte destinataire (IBAN)</label>
+          <input type="text" [(ngModel)]="virementForm.compteDestinataire" class="form-input" 
+                 placeholder="FR76 1234 5678 9012 3456 7890 123" />
+        </div>
+        <div class="form-group">
+          <label>Montant (€)</label>
+          <input type="number" [(ngModel)]="virementForm.montant" class="form-input" min="0.01" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label>Description (optionnel)</label>
+          <input type="text" [(ngModel)]="virementForm.description" class="form-input" placeholder="Ex: Remboursement, cadeau..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeVirementForm()">Annuler</button>
+        <button class="btn-primary" (click)="effectuerVirement()">Effectuer le virement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Relevé PDF -->
+  <div *ngIf="showReleveForm" class="modal-overlay" (click)="closeReleveForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📄 Télécharger le relevé PDF</h3>
+        <button class="modal-close" (click)="closeReleveForm()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Compte</label>
+          <select [(ngModel)]="releveForm.numeroCompte" class="form-input">
+            <option *ngFor="let compte of comptes" [value]="compte.numeroCompte">
+              {{ compte.numeroCompte }} - {{ compte.typeCompte }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date de début</label>
+          <input type="date" [(ngModel)]="releveForm.dateDebut" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>Date de fin</label>
+          <input type="date" [(ngModel)]="releveForm.dateFin" class="form-input" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeReleveForm()">Annuler</button>
+        <button class="btn-primary" (click)="downloadRelevePDF()">Télécharger PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Création de compte -->
+  <div *ngIf="showCreateAccountForm" class="modal-overlay" (click)="closeCreateAccountForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>➕ Créer un nouveau compte</h3>
+        <button class="modal-close" (click)="closeCreateAccountForm()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Type de compte</label>
+          <select [(ngModel)]="createAccountForm.typeCompte" class="form-input">
+            <option value="COURANT">🏦 Compte Courant</option>
+            <option value="EPARGNE">💰 Compte Épargne</option>
+          </select>
+        </div>
+        <div class="info-box">
+          <p><strong>Informations importantes :</strong></p>
+          <ul>
+            <li>Le numéro IBAN sera généré automatiquement</li>
+            <li>Le solde initial sera de 0.00 €</li>
+            <li>Vous pourrez effectuer un premier dépôt après création</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCreateAccountForm()">Annuler</button>
+        <button class="btn-primary" (click)="creerCompte()">Créer le compte</button>
+      </div>
+    </div>
+  </div>
+</div>
